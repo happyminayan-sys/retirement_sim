@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>老後資産シミュレーター</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d0f;--bg2:#131316;--bg3:#1a1a1f;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --text:#e8e8ec;--text2:#8888a0;--text3:#4a4a60;
+  --accent:#5b9cf6;--accent2:#3d7de8;
+  --green:#4ade9a;--orange:#f5a623;--red:#f56464;--purple:#c084fc;
+  --mono:'DM Mono',monospace;--sans:'Noto Sans JP',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;}
+.app{display:grid;grid-template-columns:420px 1fr;min-height:100vh;}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:24px 20px;overflow-y:auto;}
+.main{padding:24px;overflow-y:auto;}
+.app-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.app-sub{font-size:12px;color:var(--text3);margin-bottom:16px;line-height:1.6;}
+
+/* 総資産表示 */
+.total-asset-box{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px 16px;margin-bottom:20px;}
+.total-asset-label{font-size:11px;color:var(--text3);margin-bottom:4px;}
+.total-asset-val{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--accent);}
+.total-asset-breakdown{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.6;}
+
+.section{margin-bottom:22px;}
+.section-label{font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.field{margin-bottom:10px;}
+.field-header{display:flex;align-items:center;gap:5px;margin-bottom:4px;}
+.field label{font-size:12px;color:var(--text2);line-height:1.4;}
+.field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color 0.15s;}
+.field input:focus,.field select:focus{border-color:var(--accent2);}
+.field .unit{font-size:11px;color:var(--text3);margin-top:3px;line-height:1.5;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+
+.period-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px;}
+.period-table th{text-align:left;color:var(--text3);font-weight:500;padding:4px 6px;font-size:11px;border-bottom:1px solid var(--border);}
+.period-table td{padding:3px 3px;}
+.period-table input,.period-table select{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 6px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;width:100%;}
+.period-table input:focus,.period-table select:focus{border-color:var(--accent2);}
+
+.radio-group{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.radio-group label{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;transition:border-color 0.15s;}
+.radio-group input[type=radio]{display:none;}
+.radio-group label:has(input:checked){border-color:var(--accent);background:rgba(91,156,246,0.08);color:var(--accent);}
+
+.tip{position:relative;display:inline-flex;}
+.tip-btn{width:15px;height:15px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:9px;cursor:default;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tip:hover .tip-box{display:block;}
+.tip-box{display:none;position:absolute;left:20px;top:-4px;width:240px;background:#1e1e2a;border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.65;z-index:200;white-space:normal;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+
+.run-btn{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;transition:background 0.15s,transform 0.1s;margin-top:8px;}
+.run-btn:hover{background:var(--accent2);}
+.run-btn:active{transform:scale(0.98);}
+.mc-note{font-size:11px;color:var(--text3);margin-top:6px;text-align:center;min-height:16px;}
+.info-box{background:var(--bg3);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.8;margin-top:6px;}
+.mode-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:10px;padding:8px 10px;background:var(--bg3);border-radius:6px;}
+
+.shortage-block{margin-top:10px;}
+.shortage-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;}
+.shortage-row label{color:var(--text2);flex:0 0 185px;}
+.shortage-row input{width:120px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;}
+.shortage-row input:focus{border-color:var(--accent2);}
+.shortage-row .sunit{font-size:11px;color:var(--text3);}
+
+/* 臨時収入・支出テーブル */
+.event-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px;}
+.event-table th{text-align:left;color:var(--text3);font-weight:500;padding:3px 4px;font-size:10px;border-bottom:1px solid var(--border);}
+.event-table td{padding:3px 3px;vertical-align:middle;}
+.event-table input,.event-table select{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:4px 5px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;width:100%;}
+.event-table input:focus,.event-table select:focus{border-color:var(--accent2);}
+.del-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--text3);font-size:10px;cursor:pointer;padding:3px 6px;}
+.del-btn:hover{border-color:var(--red);color:var(--red);}
+.add-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;padding:7px 12px;margin-top:6px;width:100%;transition:border-color 0.15s;}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+.hidden{display:none;}
+
+/* 結果エリア */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.kpi .kv{font-family:var(--mono);font-size:22px;font-weight:500;margin-bottom:4px;}
+.kpi .kl{font-size:12px;color:var(--text2);line-height:1.4;}
+.kpi .ks{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.4;}
+
+.chart-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px;}
+.chart-row-full{margin-bottom:20px;}
+.chart-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.chart-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.chart-desc{font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;}
+.chart-legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;}
+.chart-legend span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);}
+.ld-line{width:14px;height:2px;border-radius:1px;flex-shrink:0;}
+.ld-band{width:14px;height:8px;border-radius:2px;flex-shrink:0;}
+
+.tbl-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;}
+.tbl-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.tbl-desc{font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;}
+table.snap{width:100%;border-collapse:collapse;font-size:13px;}
+table.snap th{text-align:right;font-weight:500;color:var(--text3);padding:6px 10px;border-bottom:1px solid var(--border);font-size:11px;}
+table.snap th:first-child{text-align:left;}
+table.snap td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px;color:var(--text);}
+table.snap td:first-child{text-align:left;font-family:var(--sans);color:var(--text2);font-size:12px;}
+tr.ev td:first-child{color:var(--orange);}
+table.snap tr:last-child td{border-bottom:none;}
+
+/* イベントタイムライン */
+table.timeline{width:100%;border-collapse:collapse;font-size:12px;}
+table.timeline th{text-align:left;font-weight:500;color:var(--text3);padding:6px 8px;border-bottom:1px solid var(--border);font-size:11px;}
+table.timeline td{padding:7px 8px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle;}
+table.timeline tr:last-child td{border-bottom:none;}
+.ev-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500;}
+.ev-income{background:rgba(74,222,154,0.15);color:var(--green);}
+.ev-expense{background:rgba(245,100,100,0.15);color:var(--red);}
+.ev-retire{background:rgba(91,156,246,0.15);color:var(--accent);}
+
+.cf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.cf-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;}
+.cf-age{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.cf-phase{font-size:11px;color:var(--text3);margin-bottom:10px;}
+.cf-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;align-items:baseline;}
+.cf-lbl{color:var(--text2);flex:1;margin-right:8px;}
+.cf-val{font-family:var(--mono);white-space:nowrap;}
+.cf-div{border-top:1px solid var(--border);margin:7px 0;}
+.cf-res{font-size:13px;font-weight:700;margin-top:4px;}
+
+.crash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.crash-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;}
+.crash-age{font-size:11px;color:var(--text3);margin-bottom:5px;}
+.crash-res{font-family:var(--mono);font-size:14px;font-weight:500;}
+.crash-sub{font-size:11px;color:var(--text3);margin-top:3px;font-family:var(--mono);}
+
+#loading{display:none;text-align:center;padding:60px;color:var(--text2);font-size:13px;}
+#results{display:none;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+@media(max-width:960px){
+  .app{grid-template-columns:1fr;}
+  .sidebar{border-right:none;border-bottom:1px solid var(--border);}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .chart-row{grid-template-columns:1fr;}
+  .crash-grid{grid-template-columns:repeat(2,1fr);}
+  .cf-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="sidebar">
+  <div class="app-title">老後資産シミュレーター</div>
+  <div class="app-sub">各項目を入力して「計算する」を押してください。「?」にマウスを乗せると説明が表示されます。</div>
+
+  <!-- 総資産表示 -->
+  <div class="total-asset-box">
+    <div class="total-asset-label">現在の総資産（入力値の合計）</div>
+    <div class="total-asset-val" id="totalAssetVal">－</div>
+    <div class="total-asset-breakdown" id="totalAssetBreak"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">👤 年齢の設定</div>
+    <div class="grid2">
+      <div class="field">
+        <div class="field-header"><label>現在の年齢</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">今のあなたの年齢。シミュレーションの起点になります。</span></span></div>
+        <input type="number" id="currentAge" value="58"><div class="unit">歳</div>
+      </div>
+      <div class="field">
+        <div class="field-header"><label>フルタイムを辞める年齢</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">正社員・フルタイムを辞める予定の年齢。この年齢から取り崩しルールが適用されます。</span></span></div>
+        <input type="number" id="retirementAge" value="62" oninput="syncLabels()"><div class="unit">歳</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <div class="field-header"><label>年金を受け取り始める年齢</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">公的年金の受給開始年齢。通常65歳ですが繰上げ・繰下げの場合は変更してください。</span></span></div>
+        <input type="number" id="pensionAge" value="65"><div class="unit">歳</div>
+      </div>
+      <div class="field">
+        <div class="field-header"><label>何歳まで計算するか</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">長生きリスクを考慮して100〜110歳を推奨します。</span></span></div>
+        <input type="number" id="maxAge" value="110"><div class="unit">歳まで</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">💰 今持っている資産</div>
+    <div class="field">
+      <div class="field-header"><label>リスク資産（株・投資信託・ETFなど）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">株式・投資信託・ETF・iDeCoなど価格が変動する資産の合計時価。</span></span></div>
+      <input type="number" id="riskAsset" value="35693592" oninput="updateAll()"><div class="unit">円</div>
+    </div>
+    <div class="field">
+      <div class="field-header"><label>預貯金（普通預金・定期預金など）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">銀行口座にある現金。生活費が足りないときに使う緊急バッファとして管理します。</span></span></div>
+      <input type="number" id="cashInit" value="1139359" oninput="updateAll()"><div class="unit">円</div>
+    </div>
+    <div class="field">
+      <div class="field-header"><label>特定の目的のために積み立てているお金</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">旅行・車・住宅修繕など特定の出費のために別途積み立てているお金。退職時に現金バッファに合算されます。なければ 0。</span></span></div>
+      <input type="number" id="savings" value="649782" oninput="updateAll()"><div class="unit">円（なければ 0）</div>
+    </div>
+    <div class="field">
+      <div class="field-header"><label>退職時に受け取れる退職金</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">退職時に受け取る退職金の見込み額（税引後）。退職年に現金バッファに加算されます。なければ 0。</span></span></div>
+      <input type="number" id="severance" value="1200000" oninput="updateAll()"><div class="unit">円（なければ 0）</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label" id="retirementCashLabel">🏦 退職時（62歳）の現金バッファ設定</div>
+    <div class="field">
+      <div class="field-header"><label>退職時の現金バッファの目標額</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">退職時点で現金バッファをいくらにしたいかを入力します。不足分が出た場合は下の欄で補填方法を設定してください。0 にすると目標設定なし。</span></span></div>
+      <input type="number" id="targetCashAtRetire" value="4000000" oninput="updateAll()">
+      <div class="unit">円（0 にすると目標設定なし）</div>
+    </div>
+    <div class="info-box" id="cashBufferCalc">計算後に表示</div>
+    <div class="shortage-block" id="shortageBlock">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;margin-top:10px;">不足分をどこから補うか（合計が不足額と一致するように入力してください）</div>
+      <div class="shortage-row">
+        <label>リスク資産を売って補填</label>
+        <span class="tip"><span class="tip-btn">?</span><span class="tip-box">退職時にリスク資産を一部売却して現金バッファに移す金額。退職時のリスク資産残高がその分減ります。</span></span>
+        <input type="number" id="shortageFromRA" value="0" oninput="updateAll()"><span class="sunit">円</span>
+      </div>
+      <div class="shortage-row">
+        <label>月々の積立から回す（退職前）</label>
+        <span class="tip"><span class="tip-btn">?</span><span class="tip-box">退職前の月々の積立を途中から現金バッファに回す合計金額。退職年の月次積立が自動的に減額されます。</span></span>
+        <input type="number" id="shortageFromMonthly" value="0" oninput="updateAll()"><span class="sunit">円</span>
+      </div>
+      <div class="shortage-row">
+        <label>ボーナス積立から回す（退職前）</label>
+        <span class="tip"><span class="tip-btn">?</span><span class="tip-box">退職前のボーナスから現金バッファに回す合計金額。退職年の年間積立が「通常積立額－この金額」に減額され、月々均等割りされます。例：101万円と入力すると退職年の年間積立は170万→69万になり月5.75万円になります。</span></span>
+        <input type="number" id="shortageFromBonus" value="1010000" oninput="updateAll()"><span class="sunit">円</span>
+      </div>
+      <div class="shortage-row">
+        <label>定期預金の解約・他口座から</label>
+        <span class="tip"><span class="tip-btn">?</span><span class="tip-box">定期預金の解約や他の口座からの移動など、上記以外の方法で補填する金額。</span></span>
+        <input type="number" id="shortageFromOther" value="0" oninput="updateAll()"><span class="sunit">円</span>
+      </div>
+      <div class="info-box" id="shortageResult" style="margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">📈 退職までの積立</div>
+    <div class="field">
+      <div class="field-header"><label>毎月の積立額</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">給与から毎月リスク資産に積み立てている金額。退職年に現金バッファへ回す設定がある場合は退職年の積立が自動減額されます。なければ 0。</span></span></div>
+      <input type="number" id="monthlyInvest" value="80000"><div class="unit">円/月（なければ 0）</div>
+    </div>
+    <div class="field">
+      <div class="field-header"><label>年間ボーナス積立額（合計）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">ボーナスからリスク資産に回す年間合計額。計算上は6月・12月に半分ずつ積み立てます。退職年に現金バッファへ回す設定がある場合は自動減額されます。なければ 0。</span></span></div>
+      <input type="number" id="bonusInvest" value="740000"><div class="unit">円/年（なければ 0）</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">📈 退職後の積立（任意）</div>
+    <div class="mode-desc">退職後もパート収入などからリスク資産への積立を続ける場合に設定してください。しない場合は 0 のままで構いません。</div>
+    <div class="grid2">
+      <div class="field">
+        <div class="field-header"><label>毎月の積立額</label></div>
+        <input type="number" id="postRetireInvest" value="0"><div class="unit">円/月（なければ 0）</div>
+      </div>
+      <div class="field">
+        <div class="field-header"><label>積立をやめる年齢</label></div>
+        <input type="number" id="postRetireInvestUntil" value="65"><div class="unit">歳まで（続ける場合は 999）</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">💼 退職後の収入設定（期間ごとに設定できます）</div>
+    <div class="mode-desc">最大3つの期間に分けて収入を設定できます。不要な期間は開始年齢を 999 にしてください。年金収入は年額（手取り）で入力してください。</div>
+    <table class="period-table">
+      <thead><tr><th></th><th>開始</th><th>終了</th><th>給与収入/月（円）</th><th>年金収入/年（円）</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-size:11px;color:var(--text3);white-space:nowrap;padding:6px 4px;">期間①</td>
+          <td><input type="number" id="inc1_from" value="62"></td>
+          <td><input type="number" id="inc1_to" value="64"></td>
+          <td><input type="number" id="inc1_work" value="100000"></td>
+          <td><input type="number" id="inc1_pension" value="0"></td>
+        </tr>
+        <tr>
+          <td style="font-size:11px;color:var(--text3);white-space:nowrap;padding:6px 4px;">期間②</td>
+          <td><input type="number" id="inc2_from" value="65"></td>
+          <td><input type="number" id="inc2_to" value="999"></td>
+          <td><input type="number" id="inc2_work" value="0"></td>
+          <td><input type="number" id="inc2_pension" value="1200000"></td>
+        </tr>
+        <tr>
+          <td style="font-size:11px;color:var(--text3);white-space:nowrap;padding:6px 4px;">期間③</td>
+          <td><input type="number" id="inc3_from" value="999"></td>
+          <td><input type="number" id="inc3_to" value="999"></td>
+          <td><input type="number" id="inc3_work" value="0"></td>
+          <td><input type="number" id="inc3_pension" value="0"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="unit" style="margin-top:4px;">終了年齢に 999 を入力すると「それ以降ずっと」になります。</div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">🤝 家族・パートナーなどからの援助</div>
+    <div class="grid2">
+      <div class="field">
+        <div class="field-header"><label>毎月の援助額</label></div>
+        <input type="number" id="sonSupport" value="60000"><div class="unit">円/月（なければ 0）</div>
+      </div>
+      <div class="field">
+        <div class="field-header"><label>援助が終わる年齢</label></div>
+        <input type="number" id="sonSupportUntil" value="999"><div class="unit">歳まで（続く場合は 999）</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">🎁 臨時収入の設定</div>
+    <div class="mode-desc">相続・保険金・不動産売却など特定の年月に発生する一時的な収入を入力できます。</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">受け取ったお金をどこへ振り向けるか（全体共通）</div>
+    <div class="radio-group">
+      <label><input type="radio" name="incomeTarget" value="cash" checked><span>現金バッファへ</span></label>
+      <label><input type="radio" name="incomeTarget" value="risk"><span>リスク資産へ投資</span></label>
+      <label><input type="radio" name="incomeTarget" value="threshold"><span>しきい値方式</span></label>
+    </div>
+    <div id="incomeThresholdField" class="hidden">
+      <div class="field">
+        <div class="field-header"><label>現金バッファの上限（しきい値）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">臨時収入を受け取ったとき、現金バッファがこの金額を超える分はリスク資産へ投資します。例：上限400万円で現金300万円のときに200万円入ったら、100万円は現金バッファへ、残り100万円はリスク資産へ。</span></span></div>
+        <input type="number" id="incomeThreshold" value="4000000">
+        <div class="unit">円（この金額を超えた分をリスク資産へ）</div>
+      </div>
+    </div>
+    <table class="event-table" id="extraIncomeTable">
+      <thead><tr><th>年齢</th><th>月</th><th>種別</th><th>金額（円）</th><th></th></tr></thead>
+      <tbody id="extraIncomeBody"></tbody>
+    </table>
+    <button class="add-btn" onclick="addIncomeRow()">＋ 臨時収入を追加</button>
+  </div>
+
+  <div class="section">
+    <div class="section-label">💸 臨時支出の設定</div>
+    <div class="mode-desc">医療費・住宅修繕・旅行など特定の年月に発生する一時的な支出を入力できます。</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">支払いに使うお金の優先順位（全体共通）</div>
+    <div class="field">
+      <div class="field-header"><label>現金バッファ優先しきい値</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">臨時支出が発生したとき、現金バッファに残っている金額を優先して使います。現金バッファがこのしきい値を下回る場合は、不足分をリスク資産から売却して補います。例：しきい値100万円・現金350万円・支出300万円の場合、現金から250万円（350万－100万）＋リスク資産から50万円を売却します。</span></span></div>
+      <input type="number" id="expenseThreshold" value="1000000">
+      <div class="unit">円（現金バッファをこの金額以上は保ちながら支払い。残りはリスク資産から）</div>
+    </div>
+    <table class="event-table" id="extraExpenseTable">
+      <thead><tr><th>年齢</th><th>月</th><th>種別</th><th>金額（円）</th><th></th></tr></thead>
+      <tbody id="extraExpenseBody"></tbody>
+    </table>
+    <button class="add-btn" onclick="addExpenseRow()">＋ 臨時支出を追加</button>
+  </div>
+
+  <div class="section">
+    <div class="section-label">📊 生活費と運用の前提</div>
+    <div class="field">
+      <div class="field-header"><label>現在の月々の生活費</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">今かかっている毎月の生活費の合計。設定した物価上昇率にしたがって毎年少しずつ増えます。</span></span></div>
+      <input type="number" id="monthlyExpense" value="200000"><div class="unit">円/月（物価上昇にともない毎年増加）</div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <div class="field-header"><label>リスク資産の年間利回り（税引後）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">リスク資産が年間で何%増えるかの見込み値（税引後）。S&P500の長期平均は税引後7%前後が目安です。保証値ではありません。</span></span></div>
+        <input type="number" id="annualReturn" value="7"><div class="unit">%/年（税引後）</div>
+      </div>
+      <div class="field">
+        <div class="field-header"><label>物価の上昇率</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">毎年物価が何%上がるかの見込み値。一般的な想定値は2〜3%です。</span></span></div>
+        <input type="number" id="inflationRate" value="3"><div class="unit">%/年</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">📉 リスク資産の取り崩し方式</div>
+    <div class="radio-group">
+      <label><input type="radio" name="wMode" value="rate" checked onchange="updateWithdrawUI()"><span>定率取り崩し</span></label>
+      <label><input type="radio" name="wMode" value="fixed" onchange="updateWithdrawUI()"><span>定額取り崩し</span></label>
+      <label><input type="radio" name="wMode" value="buffer" onchange="updateWithdrawUI()"><span>現金残高連動</span></label>
+    </div>
+    <div id="mode_rate">
+      <div class="mode-desc">毎月「残高 × 取り崩し率」を引き出します。残高が減れば引き出し額も減るため資産が長持ちしやすい方式です。</div>
+      <div class="grid3">
+        <div class="field"><div class="field-header"><label>退職〜75歳未満</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">0.5%/月 ＝ 年間約6%相当。</span></span></div><input type="number" id="wr1" value="0.5" step="0.05"><div class="unit">%/月</div></div>
+        <div class="field"><div class="field-header"><label>75〜85歳未満</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">0.4%/月 ＝ 年間約4.8%相当。</span></span></div><input type="number" id="wr2" value="0.4" step="0.05"><div class="unit">%/月</div></div>
+        <div class="field"><div class="field-header"><label>85歳以降</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">0.3%/月 ＝ 年間約3.6%相当。</span></span></div><input type="number" id="wr3" value="0.3" step="0.05"><div class="unit">%/月</div></div>
+      </div>
+    </div>
+    <div id="mode_fixed" class="hidden">
+      <div class="mode-desc">毎月一定の金額を引き出します。残高がこの額より少なくなった場合は残高全額を引き出します。</div>
+      <div class="field"><div class="field-header"><label>毎月の取り崩し額</label></div><input type="number" id="fixedWithdraw" value="200000"><div class="unit">円/月</div></div>
+    </div>
+    <div id="mode_buffer" class="hidden">
+      <div class="mode-desc">現金バッファが上限を超えたらリスク資産に積立、下限を下回ったらリスク資産から取り崩します。</div>
+      <div class="grid2">
+        <div class="field"><div class="field-header"><label>現金バッファの上限</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">現金がこの金額を超えたら、超えた分をリスク資産に積み立てます。</span></span></div><input type="number" id="bufferMax" value="5000000"><div class="unit">円（超えたらリスク資産へ）</div></div>
+        <div class="field"><div class="field-header"><label>現金バッファの下限</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">現金がこの金額を下回ったら、不足分をリスク資産から取り崩して補填します。</span></span></div><input type="number" id="bufferMin" value="2000000"><div class="unit">円（下回ったら取り崩し）</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">⚡ 暴落・ランダムシミュレーション設定</div>
+    <div class="grid2">
+      <div class="field">
+        <div class="field-header"><label>暴落シナリオの下落幅</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">「もし〇歳のときに大暴落したら？」を試す設定。リーマンショック（2008年）は約50%、コロナショック（2020年）は約30%の下落でした。</span></span></div>
+        <input type="number" id="crashPct" value="40"><div class="unit">%下落（リーマン級≒50%）</div>
+      </div>
+      <div class="field">
+        <div class="field-header"><label>ランダム試行回数</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">多いほど結果が安定しますが計算時間が長くなります。5,000回で十分な精度が得られます。</span></span></div>
+        <input type="number" id="mcN" value="5000"><div class="unit">回（多いほど正確・遅い）</div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-header"><label>年間リターンのブレ幅</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">実際のリターンが年間でどれだけ上下にブレるかを表す数値（標準偏差）。S&P500の過去実績は約15〜18%です。</span></span></div>
+      <input type="number" id="annualStd" value="15"><div class="unit">%（S&P500実績≒15〜18%）</div>
+    </div>
+  </div>
+
+  <button class="run-btn" onclick="runSimulation()">▶ 計算する</button>
+  <div class="mc-note" id="mcStatus"></div>
+</div>
+<div class="main">
+  <div id="loading">計算中...</div>
+  <div id="results">
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="cf-grid" id="cfGrid"></div>
+    <div class="chart-row">
+      <div class="chart-box">
+        <div class="chart-title">リスク資産・現金バッファ・取り崩し累計の推移</div>
+        <div class="chart-desc">金額は「今のお金の価値」に換算しています。帯はランダムシミュレーションの上下10%の幅です。</div>
+        <div class="chart-legend">
+          <span><span class="ld-line" style="background:#5b9cf6;"></span>リスク資産（中央値）</span>
+          <span><span class="ld-line" style="background:#4ade9a;"></span>現金バッファ（中央値）</span>
+          <span><span class="ld-line" style="background:#c084fc;"></span>取り崩し累計（中央値）</span>
+          <span><span class="ld-band" style="background:rgba(91,156,246,0.18);"></span>リスク資産の上下10%</span>
+        </div>
+        <div style="position:relative;height:250px;"><canvas id="chartAsset"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">その年齢までにお金が尽きる確率</div>
+        <div class="chart-desc">ランダムシミュレーションでリスク資産・現金バッファの両方がゼロになった割合。緑＝安全圏、オレンジ＝注意、赤＝要対策。</div>
+        <div style="position:relative;height:250px;"><canvas id="chartBankrupt"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-row-full">
+      <div class="chart-box">
+        <div class="chart-title">取り崩し累計の推移</div>
+        <div class="chart-desc">リスク資産から引き出した金額の累計です。今のお金の価値に換算しています。想定通りの利回りが続いた場合（青）とランダムシミュレーションの中央値・上下10%（帯）を表示しています。</div>
+        <div class="chart-legend">
+          <span><span class="ld-line" style="background:#5b9cf6;"></span>想定通りの利回りの場合</span>
+          <span><span class="ld-line" style="background:#c084fc;"></span>ランダムシミュレーション（中央値）</span>
+          <span><span class="ld-band" style="background:rgba(192,132,252,0.18);"></span>ランダムシミュレーションの上下10%</span>
+        </div>
+        <div style="position:relative;height:220px;"><canvas id="chartWithdrawal"></canvas></div>
+      </div>
+    </div>
+    <div class="tbl-box">
+      <div class="tbl-title">年齢ごとの資産残高（ランダムシミュレーション）</div>
+      <div class="tbl-desc">「中央値」＝真ん中のシナリオ。「悲観（下10%）」＝最も悪い10%のシナリオ。「楽観（上10%）」＝最も良い10%のシナリオ。すべて今のお金の価値に換算済みです。</div>
+      <div style="overflow-x:auto;"><table class="snap" id="snapTable"></table></div>
+    </div>
+    <div class="tbl-box" id="timelineBox" style="display:none;">
+      <div class="tbl-title">📋 イベントタイムライン（前月・翌月の残高変化）</div>
+      <div class="tbl-desc">退職年の積立変化・臨時収入・臨時支出が発生した前月と翌月の残高を一覧表示しています。左は想定通りの利回りが続いた場合、右はランダムシミュレーションの中央値です。</div>
+      <div style="overflow-x:auto;"><table class="snap" id="timelineTable"></table></div>
+    </div>
+    <div class="tbl-box">
+      <div class="tbl-title">もし大暴落が起きたら何歳まで資産が持つか</div>
+      <div class="tbl-desc">指定した年齢にリスク資産が一度だけ大きく下落した場合の結果です。暴落は1回のみ発生し、その後は通常の利回りが続く想定です。</div>
+      <div class="crash-grid" id="crashGrid"></div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+let chartAsset=null, chartBankrupt=null, chartWithdrawal=null;
+let incomeRowId=0, expenseRowId=0;
+
+// ラベル同期
+function syncLabels(){
+  const a=document.getElementById('retirementAge').value;
+  document.getElementById('retirementCashLabel').textContent='🏦 退職時（'+a+'歳）の現金バッファ設定';
+  updateAll();
+}
+function updateWithdrawUI(){
+  const m=document.querySelector('input[name=wMode]:checked').value;
+  ['rate','fixed','buffer'].forEach(v=>document.getElementById('mode_'+v).classList.toggle('hidden',m!==v));
+}
+
+// 全体更新（総資産表示＋現金バッファ計算）
+function updateAll(){
+  updateTotalAsset();
+  updateCashCalc();
+}
+
+function updateTotalAsset(){
+  const ra=+document.getElementById('riskAsset').value||0;
+  const ci=+document.getElementById('cashInit').value||0;
+  const sv=+document.getElementById('savings').value||0;
+  const total=ra+ci+sv;
+  const f=n=>Math.round(n/10000).toLocaleString()+'万円';
+  document.getElementById('totalAssetVal').textContent=f(total);
+  document.getElementById('totalAssetBreak').textContent=
+    'リスク資産 '+f(ra)+' ／ 預貯金 '+f(ci)+' ／ 積立 '+f(sv);
+}
+
+function updateCashCalc(){
+  const ci=+document.getElementById('cashInit').value||0;
+  const sv=+document.getElementById('savings').value||0;
+  const se=+document.getElementById('severance').value||0;
+  const target=+document.getElementById('targetCashAtRetire').value||0;
+  const fromRA=+document.getElementById('shortageFromRA').value||0;
+  const fromM= +document.getElementById('shortageFromMonthly').value||0;
+  const fromB= +document.getElementById('shortageFromBonus').value||0;
+  const fromO= +document.getElementById('shortageFromOther').value||0;
+  const base=ci+sv+se;
+  const f=n=>Math.round(n/10000).toLocaleString()+'万';
+  const sb=document.getElementById('shortageBlock');
+  let lines=['預貯金 '+f(ci)+' ＋ 積立 '+f(sv)+' ＋ 退職金 '+f(se)+' ＝ '+f(base)];
+  if(target>0){
+    const diff=target-base;
+    if(diff>0){
+      lines.push('目標 '+f(target)+' まで '+f(diff)+' 不足');
+      sb.style.display='block';
+      const filled=fromRA+fromM+fromB+fromO;
+      const rem=diff-filled;
+      const rEl=document.getElementById('shortageResult');
+      if(rem>0) rEl.innerHTML='<span style="color:var(--orange)">補填合計 '+f(filled)+' ／ まだ '+f(rem)+' 不足しています</span>';
+      else if(rem<0) rEl.innerHTML='<span style="color:var(--orange)">補填合計 '+f(filled)+' ／ '+f(-rem)+' 多く入力されています</span>';
+      else rEl.innerHTML='<span style="color:var(--green)">補填合計 '+f(filled)+' ／ ちょうど目標額に一致 ✓</span>';
+    }else{
+      lines.push('目標 '+f(target)+' ／ すでに達成済み（'+f(-diff)+' 余裕あり）');
+      sb.style.display='none';
+    }
+  }else{
+    sb.style.display='none';
+  }
+  document.getElementById('cashBufferCalc').innerHTML=lines.join('<br>');
+}
+
+// 臨時収入・支出の行追加・削除
+document.querySelectorAll('input[name=incomeTarget]').forEach(r=>r.addEventListener('change',()=>{
+  document.getElementById('incomeThresholdField').classList.toggle('hidden',r.value!=='threshold'||!r.checked);
+}));
+
+function addIncomeRow(){
+  const tbody=document.getElementById('extraIncomeBody');
+  const id=incomeRowId++;
+  const tr=document.createElement('tr');
+  tr.id='inc_'+id;
+  tr.innerHTML=
+    '<td><input type="number" id="inAge_'+id+'" value="65" style="width:46px"></td>'+
+    '<td><input type="number" id="inMon_'+id+'" value="6" min="1" max="12" style="width:38px"></td>'+
+    '<td><select id="inType_'+id+'" style="font-size:11px;padding:3px 4px;">'+
+      '<option>相続・贈与</option><option>保険金</option><option>不動産売却</option><option>退職金追加</option><option>その他</option>'+
+    '</select></td>'+
+    '<td><input type="number" id="inAmt_'+id+'" value="0"></td>'+
+    '<td><button class="del-btn" onclick="delRow(\'inc_'+id+'\')">×</button></td>';
+  tbody.appendChild(tr);
+}
+function addExpenseRow(){
+  const tbody=document.getElementById('extraExpenseBody');
+  const id=expenseRowId++;
+  const tr=document.createElement('tr');
+  tr.id='exp_'+id;
+  tr.innerHTML=
+    '<td><input type="number" id="exAge_'+id+'" value="70" style="width:46px"></td>'+
+    '<td><input type="number" id="exMon_'+id+'" value="1" min="1" max="12" style="width:38px"></td>'+
+    '<td><select id="exType_'+id+'" style="font-size:11px;padding:3px 4px;">'+
+      '<option>医療費</option><option>住宅修繕</option><option>旅行・レジャー</option><option>介護費用</option><option>その他</option>'+
+    '</select></td>'+
+    '<td><input type="number" id="exAmt_'+id+'" value="0"></td>'+
+    '<td><button class="del-btn" onclick="delRow(\'exp_'+id+'\')">×</button></td>';
+  tbody.appendChild(tr);
+}
+function delRow(id){const el=document.getElementById(id);if(el)el.remove();}
+
+function getIncomeEvents(){
+  const rows=document.getElementById('extraIncomeBody').querySelectorAll('tr');
+  const result=[];
+  rows.forEach(tr=>{
+    const id=tr.id.replace('inc_','');
+    const age=+document.getElementById('inAge_'+id).value||0;
+    const month=+document.getElementById('inMon_'+id).value||1;
+    const amt=+document.getElementById('inAmt_'+id).value||0;
+    const type=document.getElementById('inType_'+id).value;
+    if(amt>0)result.push({age,month,amt,type});
+  });
+  return result;
+}
+function getExpenseEvents(){
+  const rows=document.getElementById('extraExpenseBody').querySelectorAll('tr');
+  const result=[];
+  rows.forEach(tr=>{
+    const id=tr.id.replace('exp_','');
+    const age=+document.getElementById('exAge_'+id).value||0;
+    const month=+document.getElementById('exMon_'+id).value||1;
+    const amt=+document.getElementById('exAmt_'+id).value||0;
+    const type=document.getElementById('exType_'+id).value;
+    if(amt>0)result.push({age,month,amt,type});
+  });
+  return result;
+}
+
+function getParams(){
+  const wMode=document.querySelector('input[name=wMode]:checked').value;
+  const incomeTarget=document.querySelector('input[name=incomeTarget]:checked').value;
+  const monthlyInvest=+document.getElementById('monthlyInvest').value||0;
+  const bonusInvest=  +document.getElementById('bonusInvest').value||0;
+  const fromM=+document.getElementById('shortageFromMonthly').value||0;
+  const fromB=+document.getElementById('shortageFromBonus').value||0;
+  // 退職年の年間積立 = 通常積立 - 現金バッファへの振替分
+  const retireYearInvest=Math.max(0,(monthlyInvest*12+bonusInvest)-fromM-fromB);
+  return{
+    currentAge:    +document.getElementById('currentAge').value,
+    retirementAge: +document.getElementById('retirementAge').value,
+    pensionAge:    +document.getElementById('pensionAge').value,
+    maxAge:        +document.getElementById('maxAge').value,
+    riskAsset:     +document.getElementById('riskAsset').value,
+    cashInit:      +document.getElementById('cashInit').value,
+    savings:       +document.getElementById('savings').value,
+    severance:     +document.getElementById('severance').value,
+    targetCash:    +document.getElementById('targetCashAtRetire').value,
+    shortageFromRA:+document.getElementById('shortageFromRA').value||0,
+    shortageFromOther:+document.getElementById('shortageFromOther').value||0,
+    shortageFromBonus:+document.getElementById('shortageFromBonus').value||0,
+    shortageFromMonthly:+document.getElementById('shortageFromMonthly').value||0,
+    monthlyInvest, bonusInvest,
+    retireMonthlyInvest: retireYearInvest/12,  // 退職年の月次積立（均等割り）
+    postRetireInvest:      +document.getElementById('postRetireInvest').value,
+    postRetireInvestUntil: +document.getElementById('postRetireInvestUntil').value,
+    incPeriods:[
+      {from:+document.getElementById('inc1_from').value,to:+document.getElementById('inc1_to').value,work:+document.getElementById('inc1_work').value,pension:+document.getElementById('inc1_pension').value/12},
+      {from:+document.getElementById('inc2_from').value,to:+document.getElementById('inc2_to').value,work:+document.getElementById('inc2_work').value,pension:+document.getElementById('inc2_pension').value/12},
+      {from:+document.getElementById('inc3_from').value,to:+document.getElementById('inc3_to').value,work:+document.getElementById('inc3_work').value,pension:+document.getElementById('inc3_pension').value/12},
+    ],
+    sonSupport:      +document.getElementById('sonSupport').value,
+    sonSupportUntil: +document.getElementById('sonSupportUntil').value,
+    incomeTarget,
+    incomeThreshold: +document.getElementById('incomeThreshold').value||0,
+    expenseThreshold:+document.getElementById('expenseThreshold').value||0,
+    incomeEvents:  getIncomeEvents(),
+    expenseEvents: getExpenseEvents(),
+    monthlyExpense:+document.getElementById('monthlyExpense').value,
+    annualReturn:  +document.getElementById('annualReturn').value/100,
+    inflationRate: +document.getElementById('inflationRate').value/100,
+    wMode,
+    wr1:+document.getElementById('wr1').value/100,
+    wr2:+document.getElementById('wr2').value/100,
+    wr3:+document.getElementById('wr3').value/100,
+    fixedWithdraw:+document.getElementById('fixedWithdraw').value,
+    bufferMax:+document.getElementById('bufferMax').value,
+    bufferMin:+document.getElementById('bufferMin').value,
+    crashPct: +document.getElementById('crashPct').value/100,
+    mcN:      +document.getElementById('mcN').value,
+    annualStd:+document.getElementById('annualStd').value/100,
+  };
+}
+
+function getIncome(p,ageI){
+  const period=p.incPeriods.find(pp=>ageI>=pp.from&&ageI<=pp.to);
+  const aid=(ageI<=p.sonSupportUntil)?p.sonSupport:0;
+  if(!period)return aid;
+  return period.work+period.pension+aid;
+}
+function wRate(p,age){return age<75?p.wr1:age<85?p.wr2:p.wr3;}
+function mRet(p){return Math.pow(1+p.annualReturn,1/12)-1;}
+function mInf(p){return Math.pow(1+p.inflationRate,1/12)-1;}
+
+// メインシミュレーション関数
+function simulate(p, crashAge, retFn, collectTimeline){
+  const mi=mInf(p);
+  const total=(p.maxAge-p.currentAge)*12;
+  let riskAsset=p.riskAsset;
+  let cash=p.cashInit+p.savings;
+  let retireInitDone=false;
+  let totalW=0;
+  const yearlyResults=[];
+  const timelineEvents=[]; // イベント前後の記録
+
+  for(let m=0;m<total;m++){
+    const ageExact=p.currentAge+m/12;
+    const ageInt=Math.floor(ageExact);
+    const def=Math.pow(1+mi,m);
+    const monthInYear=m%12; // 0=1月, 5=6月, 11=12月
+    const mr=retFn(m);
+
+    // 臨時収入処理
+    for(const ev of p.incomeEvents){
+      if(ageInt===ev.age&&monthInYear===(ev.month-1)){
+        const prevRA=riskAsset, prevCash=cash;
+        if(p.incomeTarget==='cash'){
+          cash+=ev.amt;
+        }else if(p.incomeTarget==='risk'){
+          riskAsset+=ev.amt;
+        }else{ // しきい値方式
+          const cashRoom=Math.max(0,p.incomeThreshold-cash);
+          const toCash=Math.min(ev.amt,p.incomeThreshold-cash>0?p.incomeThreshold-cash:0);
+          cash+=Math.max(0,toCash);
+          riskAsset+=ev.amt-Math.max(0,toCash);
+        }
+        if(collectTimeline) timelineEvents.push({
+          ageInt,month:ev.month,type:'income',label:ev.type,amt:ev.amt,
+          prevRA,prevCash,afterRA:riskAsset,afterCash:cash,def
+        });
+      }
+    }
+
+    // 臨時支出処理
+    for(const ev of p.expenseEvents){
+      if(ageInt===ev.age&&monthInYear===(ev.month-1)){
+        const prevRA=riskAsset, prevCash=cash;
+        let remaining=ev.amt;
+        // 現金バッファ優先（しきい値を下回らない範囲で現金から支払い）
+        const cashAvail=Math.max(0,cash-p.expenseThreshold);
+        const fromCash=Math.min(remaining,cashAvail);
+        cash-=fromCash;
+        remaining-=fromCash;
+        // 残りはリスク資産から
+        if(remaining>0){
+          riskAsset=Math.max(0,riskAsset-remaining);
+          remaining=Math.max(0,remaining-riskAsset);
+        }
+        if(collectTimeline) timelineEvents.push({
+          ageInt,month:ev.month,type:'expense',label:ev.type,amt:-ev.amt,
+          prevRA,prevCash,afterRA:riskAsset,afterCash:cash,def
+        });
+      }
+    }
+
+    // 退職前：積立
+    if(ageExact<p.retirementAge){
+      const isRetireYear=(ageInt===p.retirementAge-1);
+      // 退職年は均等割り、それ以外は通常積立
+      const mInvest=isRetireYear?p.retireMonthlyInvest:p.monthlyInvest;
+      // 退職年以外のボーナス月に追加加算
+      let bonus=0;
+      if(!isRetireYear&&(monthInYear===5||monthInYear===11)){
+        bonus=p.bonusInvest/2;
+      }
+      riskAsset=riskAsset*(1+mr)+mInvest+bonus;
+
+      // 退職年の積立変化をタイムラインに記録（初月のみ）
+      if(isRetireYear&&monthInYear===0&&collectTimeline){
+        timelineEvents.push({
+          ageInt,month:1,type:'retire',
+          label:'退職年の積立変化',
+          normalInvest:(p.monthlyInvest*12+p.bonusInvest),
+          actualInvest:(p.retireMonthlyInvest*12),
+          diff:-((p.monthlyInvest*12+p.bonusInvest)-(p.retireMonthlyInvest*12)),
+          def
+        });
+      }
+
+    }else{
+      // 退職時の初期化（一度だけ）
+      if(!retireInitDone){
+        cash+=p.severance+p.shortageFromOther+p.shortageFromBonus+p.shortageFromMonthly;
+        riskAsset=Math.max(0,riskAsset-p.shortageFromRA);
+        retireInitDone=true;
+      }
+
+      // 退職後の積立
+      const doPost=p.postRetireInvest>0&&ageInt<p.postRetireInvestUntil;
+      riskAsset=riskAsset*(1+mr)+(doPost?p.postRetireInvest:0);
+
+      const income=getIncome(p,ageInt);
+      const livingCost=p.monthlyExpense*Math.pow(1+mi,m);
+
+      if(p.wMode==='rate'){
+        let w=riskAsset*wRate(p,ageInt);
+        riskAsset-=w;if(riskAsset<0){w+=riskAsset;riskAsset=0;}totalW+=w;
+        const sf=livingCost-(w+income);
+        if(sf>0){cash-=sf;if(cash<0&&riskAsset>0){const e=Math.abs(cash);if(riskAsset>=e){riskAsset-=e;cash=0;}else{cash+=riskAsset;riskAsset=0;}}}
+      }else if(p.wMode==='fixed'){
+        const w=Math.min(p.fixedWithdraw,riskAsset);
+        riskAsset-=w;totalW+=w;
+        const sf=livingCost-(w+income);
+        if(sf>0){cash-=sf;if(cash<0&&riskAsset>0){const e=Math.abs(cash);if(riskAsset>=e){riskAsset-=e;cash=0;}else{cash+=riskAsset;riskAsset=0;}}}
+      }else{
+        const net=income-livingCost;cash+=net;
+        if(cash>p.bufferMax){const s=cash-p.bufferMax;riskAsset+=s;cash=p.bufferMax;}
+        else if(cash<p.bufferMin&&riskAsset>0){const need=p.bufferMin-cash;const take=Math.min(need,riskAsset);riskAsset-=take;cash+=take;totalW+=take;}
+      }
+    }
+
+    if(crashAge!==null&&ageInt===crashAge&&m%12===0) riskAsset*=(1-p.crashPct);
+    if(m%12===0) yearlyResults.push({age:ageInt,raR:riskAsset/def,cashR:Math.max(cash/def,0),twR:totalW/def,totalW,raNom:riskAsset,cashNom:Math.max(cash,0),twNom:totalW});
+    if(riskAsset<=0&&cash<=0) return{yearlyResults,bankruptAge:ageInt,totalW,timelineEvents};
+  }
+  return{yearlyResults,bankruptAge:null,totalW,timelineEvents};
+}
+
+function simDet(p,crashAge=null){
+  const mr=mRet(p);
+  return simulate(p,crashAge,()=>mr,crashAge===null);
+}
+
+function makeRng(seed){let s=seed>>>0;return()=>{s=(Math.imul(1664525,s)+1013904223)>>>0;return s/4294967296;};}
+function normS(rng,mu,sd){const u1=rng(),u2=rng();return mu+Math.sqrt(-2*Math.log(u1+1e-12))*Math.cos(2*Math.PI*u2)*sd;}
+
+function simRandom(p){
+  const mr=mRet(p),msd=p.annualStd/Math.sqrt(12);
+  const sAges=[58,62,65,70,75,80,85,90,95,100].filter(a=>a>=p.currentAge&&a<=p.maxAge);
+  const snaps={};sAges.forEach(a=>snaps[a]={r:[],c:[],tw:[],rN:[],cN:[]});
+  const bAges=[],tws=[];
+  const rng=makeRng(42);
+
+  for(let i=0;i<p.mcN;i++){
+    const res=simulate(p,null,(m)=>normS(rng,mr,msd),false);
+    res.yearlyResults.forEach(r=>{
+      if(snaps[r.age]){snaps[r.age].r.push(r.raR);snaps[r.age].c.push(r.cashR);snaps[r.age].tw.push(r.twR);snaps[r.age].rN.push(r.raNom);snaps[r.age].cN.push(r.cashNom);}
+    });
+    bAges.push(res.bankruptAge!==null?res.bankruptAge:p.maxAge+1);
+    tws.push(res.totalW);
+  }
+
+  const pct=(arr,q)=>{const s=[...arr].sort((a,b)=>a-b);return s[Math.floor(q/100*(s.length-1))]||0;};
+  const med=arr=>pct(arr,50);
+  const chk=[];for(let a=80;a<=Math.min(p.maxAge,105);a+=5)chk.push(a);
+  return{
+    bankruptPcts:chk.map(age=>({age,pct:bAges.filter(a=>a<=age).length/p.mcN*100})),
+    snapData:sAges.map(age=>({
+      age,
+      raMed:med(snaps[age].r),cashMed:med(snaps[age].c),twMed:med(snaps[age].tw),
+      ra10:pct(snaps[age].r,10),ra90:pct(snaps[age].r,90),
+      tw10:pct(snaps[age].tw,10),tw90:pct(snaps[age].tw,90),
+      raNomMed:med(snaps[age].rN),cashNomMed:med(snaps[age].cN),
+    })),
+    survivePct:bAges.filter(a=>a>p.maxAge).length/p.mcN*100,
+    twMedian:med(tws),tw10:pct(tws,10),tw90:pct(tws,90),
+  };
+}
+
+const fmt =n=>Math.round(n/10000).toLocaleString()+'万円';
+const fmtM=n=>(n/10000).toFixed(1)+'万円';
+
+function runSimulation(){
+  const p=getParams();
+  updateAll();
+  document.getElementById('loading').style.display='block';
+  document.getElementById('results').style.display='none';
+  document.getElementById('mcStatus').textContent='計算中… ('+p.mcN.toLocaleString()+'回)';
+  setTimeout(()=>{
+    const det=simDet(p);
+    const mc=simRandom(p);
+    const cas=[p.retirementAge];
+    for(let a=p.retirementAge+3;a<=Math.min(85,p.maxAge-5);a+=5)if(!cas.includes(a))cas.push(a);
+    cas.sort((a,b)=>a-b);
+    const crashR=cas.slice(0,7).map(ca=>{const r=simDet(p,ca);return{age:ca,bankruptAge:r.bankruptAge,totalW:r.totalW};});
+    renderResults(p,det,mc,crashR);
+    document.getElementById('loading').style.display='none';
+    document.getElementById('results').style.display='block';
+    document.getElementById('mcStatus').textContent='計算完了（'+p.mcN.toLocaleString()+'回）';
+  },50);
+}
+
+function renderResults(p,det,mc,crashR){
+  const mi=mInf(p);
+  const b90=mc.bankruptPcts.find(b=>b.age===90)||mc.bankruptPcts[mc.bankruptPcts.length-1];
+
+  // KPI
+  document.getElementById('kpiGrid').innerHTML=
+    '<div class="kpi" style="border-color:rgba(91,156,246,0.3)">'+
+      '<div class="kv" style="color:var(--accent)">'+(det.bankruptAge?det.bankruptAge+'歳':p.maxAge+'歳超')+'</div>'+
+      '<div class="kl">お金が尽きる年齢<br>（想定通りの利回りが続いた場合）</div>'+
+      '<div class="ks">年利'+(p.annualReturn*100).toFixed(1)+'% / 物価上昇'+(p.inflationRate*100).toFixed(1)+'%</div>'+
+    '</div>'+
+    '<div class="kpi">'+
+      '<div class="kv">'+fmt(det.totalW)+'</div>'+
+      '<div class="kl">生涯の取り崩し合計額<br>（想定通りの利回りの場合）</div>'+
+      '<div class="ks">将来の金額のまま（物価上昇分を含む）</div>'+
+    '</div>'+
+    '<div class="kpi">'+
+      '<div class="kv">'+fmt(mc.twMedian)+'</div>'+
+      '<div class="kl">取り崩し合計の中央値<br>（ランダムシミュレーション）</div>'+
+      '<div class="ks">少ない10%: '+fmt(mc.tw10)+' ／ 多い10%: '+fmt(mc.tw90)+'</div>'+
+    '</div>'+
+    '<div class="kpi" style="border-color:'+(b90.pct>30?'rgba(245,100,100,0.3)':'rgba(245,166,35,0.3)')+'">'+
+      '<div class="kv" style="color:'+(b90.pct>30?'var(--red)':'var(--orange)')+'">'+b90.pct.toFixed(1)+'%</div>'+
+      '<div class="kl">90歳までにお金が尽きる確率<br>（ランダムシミュレーション）</div>'+
+      '<div class="ks">'+p.maxAge+'歳まで持つ確率: '+mc.survivePct.toFixed(1)+'%</div>'+
+    '</div>';
+
+  // 月次収支カード
+  const cfAges=[p.retirementAge,p.pensionAge,75].filter(a=>a>=p.currentAge&&a<=p.maxAge);
+  const cfLabels=['フルタイムを辞めた直後','年金を受け取り始めた年','75歳（取り崩し率が変わる年）'];
+  document.getElementById('cfGrid').innerHTML=cfAges.map((age,i)=>{
+    const m=(age-p.currentAge)*12;
+    const def=Math.pow(1+mi,m),lc=p.monthlyExpense*def;
+    const snap=mc.snapData.find(s=>s.age===age);
+    const raA=snap?snap.raMed:0;
+    let w=0;
+    if(p.wMode==='rate')w=raA*wRate(p,age);
+    else if(p.wMode==='fixed')w=Math.min(p.fixedWithdraw,raA);
+    const inc=getIncome(p,age);
+    const total=w+inc,surplus=total-lc,isOk=surplus>=0;
+    return '<div class="cf-card">'+
+      '<div class="cf-age">'+age+'歳</div><div class="cf-phase">'+cfLabels[i]+'</div>'+
+      '<div class="cf-row"><span class="cf-lbl">リスク資産から毎月引き出す額</span><span class="cf-val">'+fmtM(w)+'/月</span></div>'+
+      '<div class="cf-row"><span class="cf-lbl">給与・年金・援助などの収入</span><span class="cf-val">'+fmtM(inc)+'/月</span></div>'+
+      '<div class="cf-div"></div>'+
+      '<div class="cf-row"><span class="cf-lbl">合計の手取り</span><span class="cf-val">'+fmtM(total)+'/月</span></div>'+
+      '<div class="cf-row"><span class="cf-lbl">生活費（物価上昇後）</span><span class="cf-val">'+fmtM(lc)+'/月</span></div>'+
+      '<div class="cf-div"></div>'+
+      '<div class="cf-res" style="color:'+(isOk?'var(--green)':'var(--orange)')+'">'+
+        (isOk?'余剰 '+fmtM(surplus)+' → 消費':'不足 '+fmtM(Math.abs(surplus))+' → 現金から補填')+
+      '</div></div>';
+  }).join('');
+
+  // チャート
+  if(chartAsset)chartAsset.destroy();
+  if(chartBankrupt)chartBankrupt.destroy();
+  if(chartWithdrawal)chartWithdrawal.destroy();
+  const gc='rgba(255,255,255,0.06)',tc='#666680';
+  const labels=mc.snapData.map(s=>s.age+'歳');
+
+  // 資産推移チャート（リスク資産・現金・取り崩し累計）
+  chartAsset=new Chart(document.getElementById('chartAsset'),{type:'line',
+    data:{labels,datasets:[
+      {label:'リスク資産（悲観10%）',data:mc.snapData.map(s=>Math.round(s.ra10/10000)),borderColor:'rgba(91,156,246,0.2)',backgroundColor:'rgba(91,156,246,0.07)',borderWidth:1,borderDash:[3,3],pointRadius:0,fill:'+1',tension:0.3},
+      {label:'リスク資産（楽観90%）',data:mc.snapData.map(s=>Math.round(s.ra90/10000)),borderColor:'rgba(91,156,246,0.2)',backgroundColor:'rgba(91,156,246,0.07)',borderWidth:1,borderDash:[3,3],pointRadius:0,fill:false,tension:0.3},
+      {label:'リスク資産（中央値）',data:mc.snapData.map(s=>Math.round(s.raMed/10000)),borderColor:'#5b9cf6',backgroundColor:'transparent',borderWidth:2.5,pointRadius:3,tension:0.3},
+      {label:'現金バッファ（中央値）',data:mc.snapData.map(s=>Math.round(s.cashMed/10000)),borderColor:'#4ade9a',backgroundColor:'transparent',borderWidth:2,borderDash:[5,3],pointRadius:3,tension:0.3},
+      {label:'取り崩し累計（中央値）',data:mc.snapData.map(s=>Math.round(s.twMed/10000)),borderColor:'#c084fc',backgroundColor:'transparent',borderWidth:2,borderDash:[2,2],pointRadius:3,tension:0.3},
+    ]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.raw?.toLocaleString()+'万円'}}},
+      scales:{x:{ticks:{color:tc,font:{size:11}},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11},callback:v=>v.toLocaleString()+'万'},grid:{color:gc}}}}
+  });
+
+  // 枯渇確率チャート
+  chartBankrupt=new Chart(document.getElementById('chartBankrupt'),{type:'bar',
+    data:{labels:mc.bankruptPcts.map(b=>b.age+'歳'),datasets:[{label:'お金が尽きる確率',data:mc.bankruptPcts.map(b=>+b.pct.toFixed(1)),backgroundColor:mc.bankruptPcts.map(b=>b.pct<10?'#4ade9a':b.pct<30?'#f5a623':'#f56464'),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw+'%'}}},
+      scales:{x:{ticks:{color:tc,font:{size:11}},grid:{color:gc}},y:{max:100,ticks:{color:tc,font:{size:11},callback:v=>v+'%'},grid:{color:gc}}}}
+  });
+
+  // 取り崩し累計グラフ（単独）
+  const detLabels=det.yearlyResults.map(r=>r.age+'歳');
+  const detTW=det.yearlyResults.map(r=>Math.round(r.twR/10000));
+  chartWithdrawal=new Chart(document.getElementById('chartWithdrawal'),{type:'line',
+    data:{labels,datasets:[
+      {label:'取り崩し累計（悲観10%）',data:mc.snapData.map(s=>Math.round(s.tw10/10000)),borderColor:'rgba(192,132,252,0.2)',backgroundColor:'rgba(192,132,252,0.07)',borderWidth:1,borderDash:[3,3],pointRadius:0,fill:'+1',tension:0.3},
+      {label:'取り崩し累計（楽観90%）',data:mc.snapData.map(s=>Math.round(s.tw90/10000)),borderColor:'rgba(192,132,252,0.2)',backgroundColor:'rgba(192,132,252,0.07)',borderWidth:1,borderDash:[3,3],pointRadius:0,fill:false,tension:0.3},
+      {label:'ランダムシミュレーション（中央値）',data:mc.snapData.map(s=>Math.round(s.twMed/10000)),borderColor:'#c084fc',backgroundColor:'transparent',borderWidth:2.5,pointRadius:3,tension:0.3},
+      {label:'想定通りの利回りの場合',data:mc.snapData.map(s=>{const r=det.yearlyResults.find(d=>d.age===s.age);return r?Math.round(r.twR/10000):null;}),borderColor:'#5b9cf6',backgroundColor:'transparent',borderWidth:2,borderDash:[4,2],pointRadius:3,tension:0.3},
+    ]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.raw?.toLocaleString()+'万円'}}},
+      scales:{x:{ticks:{color:tc,font:{size:11}},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11},callback:v=>v.toLocaleString()+'万'},grid:{color:gc}}}}
+  });
+
+  // スナップショットテーブル
+  const evLabel=age=>{
+    if(age===p.retirementAge)return'← 取り崩し開始（退職）';
+    if(age===p.pensionAge)return'← 年金受給開始';
+    if(age===75&&p.wMode==='rate')return'← 取り崩し率 '+(p.wr1*100).toFixed(2)+'%→'+(p.wr2*100).toFixed(2)+'%';
+    if(age===85&&p.wMode==='rate')return'← 取り崩し率 '+(p.wr2*100).toFixed(2)+'%→'+(p.wr3*100).toFixed(2)+'%';
+    return'';
+  };
+  document.getElementById('snapTable').innerHTML=
+    '<thead>'+
+      '<tr>'+
+        '<th rowspan="2" style="text-align:left;vertical-align:bottom">年齢</th>'+
+        '<th colspan="2" style="text-align:center;border-bottom:none;color:var(--text2)">リスク資産（中央値）</th>'+
+        '<th colspan="2" style="text-align:center;border-bottom:none;color:var(--text2)">現金バッファ（中央値）</th>'+
+        '<th colspan="2" style="text-align:center;border-bottom:none;color:var(--text2)">取り崩し累計（中央値）</th>'+
+        '<th rowspan="2" style="text-align:right;vertical-align:bottom">悲観（下10%）<br>リスク資産</th>'+
+        '<th rowspan="2" style="text-align:right;vertical-align:bottom">楽観（上10%）<br>リスク資産</th>'+
+        '<th rowspan="2"></th>'+
+      '</tr>'+
+      '<tr>'+
+        '<th style="text-align:right;color:var(--accent)">実質値<br><span style="font-size:10px;color:var(--text3)">今の円の価値</span></th>'+
+        '<th style="text-align:right;color:var(--orange)">名目値<br><span style="font-size:10px;color:var(--text3)">将来の実際の金額</span></th>'+
+        '<th style="text-align:right;color:var(--accent)">実質値</th>'+
+        '<th style="text-align:right;color:var(--orange)">名目値</th>'+
+        '<th style="text-align:right;color:var(--accent)">実質値</th>'+
+        '<th style="text-align:right;color:var(--orange)">名目値</th>'+
+      '</tr>'+
+    '</thead><tbody>'+
+    mc.snapData.map(s=>
+      '<tr class="'+(evLabel(s.age)?'ev':'')+'">'+
+        '<td>'+s.age+'歳</td>'+
+        '<td style="color:var(--accent)">'+fmt(s.raMed)+'</td>'+
+        '<td style="color:var(--orange)">'+fmt(s.raNomMed)+'</td>'+
+        '<td style="color:var(--accent)">'+fmt(s.cashMed)+'</td>'+
+        '<td style="color:var(--orange)">'+fmt(s.cashNomMed)+'</td>'+
+        '<td style="color:var(--accent)">'+fmt(s.twMed)+'</td>'+
+        '<td style="color:var(--orange)">'+fmt(s.twMed*Math.pow(1+p.inflationRate/12,(s.age-p.currentAge)*12))+'</td>'+
+        '<td>'+fmt(s.ra10)+'</td><td>'+fmt(s.ra90)+'</td>'+
+        '<td style="text-align:left;font-family:var(--sans);font-size:11px;color:var(--orange)">'+evLabel(s.age)+'</td>'+
+      '</tr>'
+    ).join('')+'</tbody>';
+
+  // イベントタイムライン
+  const timeline=det.timelineEvents;
+  const timelineBox=document.getElementById('timelineBox');
+  if(timeline.length>0){
+    timelineBox.style.display='block';
+    // ランダムシミュレーション中央値の月次データを取得（近似）
+    const tlRows=timeline.map(ev=>{
+      if(ev.type==='retire'){
+        return '<tr>'+
+          '<td>'+ev.ageInt+'歳</td>'+
+          '<td>1月</td>'+
+          '<td><span class="ev-badge ev-retire">退職年の積立変化</span></td>'+
+          '<td colspan="4" style="font-family:var(--mono);font-size:12px;">'+
+            '通常積立 '+fmt(ev.normalInvest)+'/年 → 実際 '+fmt(ev.actualInvest)+'/年 '+
+            '（差額 ▲'+fmt(-ev.diff)+' を現金バッファへ）'+
+          '</td>'+
+        '</tr>';
+      }else{
+        const isIncome=ev.type==='income';
+        const badge=isIncome?'<span class="ev-badge ev-income">臨時収入</span>':'<span class="ev-badge ev-expense">臨時支出</span>';
+        const amtStr=(isIncome?'＋':'▲')+fmt(Math.abs(ev.amt));
+        return '<tr>'+
+          '<td>'+ev.ageInt+'歳</td>'+
+          '<td>'+ev.month+'月</td>'+
+          '<td>'+badge+' '+ev.label+'</td>'+
+          '<td style="font-family:var(--mono);">'+amtStr+'</td>'+
+          '<td style="font-family:var(--mono);color:var(--text2);">'+
+            'リスク資産 '+fmt(ev.prevRA/ev.def)+'→'+fmt(ev.afterRA/ev.def)+
+          '</td>'+
+          '<td style="font-family:var(--mono);color:var(--text2);">'+
+            '現金 '+fmt(ev.prevCash/ev.def)+'→'+fmt(ev.afterCash/ev.def)+
+          '</td>'+
+        '</tr>';
+      }
+    }).join('');
+    document.getElementById('timelineTable').innerHTML=
+      '<thead><tr>'+
+        '<th>年齢</th><th>月</th><th>イベント</th><th>金額</th>'+
+        '<th>リスク資産（前→後）</th><th>現金バッファ（前→後）</th>'+
+      '</tr></thead><tbody>'+tlRows+'</tbody>';
+  }else{
+    timelineBox.style.display='none';
+  }
+
+  // 暴落シナリオ
+  document.getElementById('crashGrid').innerHTML=crashR.map(r=>{
+    const ok=!r.bankruptAge;
+    return '<div class="crash-card">'+
+      '<div class="crash-age">'+r.age+'歳のときに'+(p.crashPct*100).toFixed(0)+'%暴落した場合</div>'+
+      '<div class="crash-res" style="color:'+(ok?'var(--green)':'var(--orange)')+'">'+
+        (r.bankruptAge?r.bankruptAge+'歳でお金が尽きる':p.maxAge+'歳超も資産が残る')+
+      '</div>'+
+      '<div class="crash-sub">引き出し合計 '+fmt(r.totalW)+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+window.addEventListener('load',()=>{updateAll();runSimulation();});
+</script>
+</body>
+</html>
