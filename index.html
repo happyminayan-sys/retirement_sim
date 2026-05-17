@@ -319,7 +319,7 @@ table.snap tr:last-child td{border-bottom:none;}
     </div>
     <div class="field">
       <div class="field-header"><label>毎月の積立額</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">給与から毎月積み立てる金額。なければ 0。</span></span></div>
-      <input type="number" id="monthlyInvest" value="30000"><div class="unit">円/月（なければ 0）</div>
+      <input type="number" id="monthlyInvest" value="30000" oninput="updateAll()"><div class="unit">円/月（なければ 0）</div>
       <div class="detail-only" style="margin-top:6px;" id="preMonthlyTargetArea">
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">積立先（通常年）</div>
         <div class="radio-group">
@@ -332,6 +332,7 @@ table.snap tr:last-child td{border-bottom:none;}
           <input type="number" id="preMonthlyTargetSplitAmt" value="0" placeholder="資産運用へ回す金額（円）" style="width:100%;margin-top:4px;">
           <div class="unit">円を資産運用へ（残りは備え用のお金へ）</div>
         </div>
+        <div id="preMonthlyRetireBlock" style="display:none;">
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px;margin-top:8px;">積立先（退職年のみ）</div>
         <div class="radio-group">
           <label><input type="radio" name="preMonthlyRetireTarget" value="risk" checked onchange="updateInvestUI('preMonthlyRetire')"><span>資産運用へ</span></label>
@@ -343,11 +344,12 @@ table.snap tr:last-child td{border-bottom:none;}
           <input type="number" id="preMonthlyRetireTargetSplitAmt" value="0" style="width:100%;margin-top:4px;">
           <div class="unit">円を資産運用へ（残りは備え用のお金へ）</div>
         </div>
+        </div>
       </div>
     </div>
     <div class="field">
       <div class="field-header"><label>年間ボーナス積立額（合計）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">ボーナスから年間で積み立てる合計額。計算上は6月・12月に半分ずつ積み立てます。なければ 0。</span></span></div>
-      <input type="number" id="bonusInvest" value="100000"><div class="unit">円/年（なければ 0）</div>
+      <input type="number" id="bonusInvest" value="100000" oninput="updateAll()"><div class="unit">円/年（なければ 0）</div>
       <div class="detail-only" style="margin-top:6px;">
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">積立先（通常年）</div>
         <div class="radio-group">
@@ -360,6 +362,7 @@ table.snap tr:last-child td{border-bottom:none;}
           <input type="number" id="preBonusTargetSplitAmt" value="0" style="width:100%;margin-top:4px;">
           <div class="unit">円を資産運用へ（残りは備え用のお金へ）</div>
         </div>
+        <div id="preBonusRetireBlock" style="display:none;">
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px;margin-top:8px;">積立先（退職年のみ）</div>
         <div class="radio-group">
           <label><input type="radio" name="preBonusRetireTarget" value="risk" checked onchange="updateInvestUI('preBonusRetire')"><span>資産運用へ</span></label>
@@ -370,6 +373,7 @@ table.snap tr:last-child td{border-bottom:none;}
         <div id="preBonusRetireTargetSplitField" class="hidden">
           <input type="number" id="preBonusRetireTargetSplitAmt" value="0" style="width:100%;margin-top:4px;">
           <div class="unit">円を資産運用へ（残りは備え用のお金へ）</div>
+        </div>
         </div>
       </div>
     </div>
@@ -430,6 +434,24 @@ table.snap tr:last-child td{border-bottom:none;}
       <div class="field-header"><label>年金の年間受取額（手取り）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">税金・健康保険料・介護保険料を引いた「実際に手元に来る」年間合計額。「ねんきん定期便」や「ねんきんネット」で確認できます。詳細モードでは下の期間テーブルで設定できます。</span></span></div>
       <input type="number" id="inc2_pension" value="1200000" oninput="updatePensionMonthly()">
       <div class="unit">円/年（手取り） → 月 <span id="pensionMonthly">10</span>万円</div>
+    </div>
+    <div class="field" style="margin-top:4px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;">
+          <input type="checkbox" id="pensionSlideEnabled" onchange="updatePensionSlideUI()" style="width:auto;cursor:pointer;">
+          マクロ経済スライドを反映する
+        </label>
+        <span class="tip"><span class="tip-btn">?</span><span class="tip-box">マクロ経済スライドとは、年金額の増加をインフレ率より少し抑える仕組みです。実際には0.4〜0.8%程度インフレ率より少ない上昇率になることが多いです。オンにすると「年金はインフレより○%少ない率でしか増えない」という計算になります。</span></span>
+      </div>
+      <div id="pensionSlideField" class="hidden" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="font-size:12px;color:var(--text2);">インフレ率より</div>
+        <input type="number" id="pensionSlideRate" value="0.8" step="0.1" min="0" max="2"
+          style="width:70px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;">
+        <div style="font-size:12px;color:var(--text2);">%低い率で年金が増える</div>
+      </div>
+      <div id="pensionSlideHint" class="hidden" style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.6;">
+        例：インフレ率3%のとき年金は2.2%しか上がらない（0.8%分目減り）。<br>実績では0.4〜0.8%程度のマイナスになることが多いです。
+      </div>
     </div>
     <div class="field detail-only">
       <div class="field-header"><label>家族・パートナーなどからの援助</label></div>
@@ -493,9 +515,9 @@ table.snap tr:last-child td{border-bottom:none;}
     <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500;margin-top:14px;">臨時支出</div>
     <div class="mode-desc">医療費・住宅修繕・旅行など特定の年月に出ていく一時的な支出を入力できます。</div>
     <div class="field">
-      <div class="field-header"><label>支払い時の優先順位</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">臨時支出が発生したとき、備え用のお金を優先して使います。備え用のお金がこの金額を下回る場合は、不足分を資産運用から売却して補います。</span></span></div>
+      <div class="field-header"><label>支払い時の優先順位（実質値・今の円の価値）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">臨時支出が発生したとき、備え用のお金を優先して使います。備え用のお金が「今の円の価値」でこの金額を下回らない範囲で現金から支払い、残りは資産運用から売却して補います。物価上昇後も常に今の100万円相当を残す計算になります。</span></span></div>
       <input type="number" id="expenseThreshold" value="1000000">
-      <div class="unit">円以上は備え用のお金から支払い。足りない分は資産運用を売って補填</div>
+      <div class="unit">円（実質値・今の円の価値）以上を備え用のお金に残す。足りない分は資産運用から</div>
     </div>
     <table class="event-table" id="extraExpenseTable">
       <thead><tr><th>年齢</th><th>月</th><th>種別</th><th>金額（円）</th><th></th></tr></thead>
@@ -580,6 +602,13 @@ table.snap tr:last-child td{border-bottom:none;}
     </div>
   </div>
 
+  <div style="display:flex;gap:8px;margin-bottom:0;">
+    <button onclick="saveData()" style="flex:1;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-family:var(--sans);font-size:12px;cursor:pointer;transition:border-color 0.15s,color 0.15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">💾 データ保存</button>
+    <label style="flex:1;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-family:var(--sans);font-size:12px;cursor:pointer;text-align:center;transition:border-color 0.15s,color 0.15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">
+      📂 データ読込
+      <input type="file" id="loadFileInput" accept=".json" style="display:none;" onchange="loadData(event)">
+    </label>
+  </div>
   <button class="run-btn" onclick="runSimulation()">▶ 計算する</button>
   <button class="clear-btn" onclick="clearData()">🗑️ 入力データをすべてクリアする</button>
   <div class="mc-note" id="mcStatus"></div>
@@ -765,6 +794,11 @@ function syncLabels(){
 function updatePensionMonthly(){
   document.getElementById('pensionMonthly').textContent=Math.round(+document.getElementById('inc2_pension').value/12/10000);
 }
+function updatePensionSlideUI(){
+  const enabled=document.getElementById('pensionSlideEnabled').checked;
+  document.getElementById('pensionSlideField').classList.toggle('hidden',!enabled);
+  document.getElementById('pensionSlideHint').classList.toggle('hidden',!enabled);
+}
 function updateWithdrawUI(){
   const m=document.querySelector('input[name=wMode]:checked').value;
   ['rate','fixed','buffer'].forEach(v=>document.getElementById('mode_'+v).classList.toggle('hidden',m!==v));
@@ -793,9 +827,22 @@ function checkThresholdVisibility(){
   if(field) field.style.display=show?'block':'none';
 }
 
+function updateRetireTargetGrayout(){
+  const monthly=+document.getElementById('monthlyInvest').value||0;
+  const bonus=+document.getElementById('bonusInvest').value||0;
+  const fromM=+document.getElementById('shortageFromMonthly').value||0;
+  const fromB=+document.getElementById('shortageFromBonus').value||0;
+  const retireMonthlyAmt=Math.max(0,monthly*12-fromM);
+  const retireBonusAmt=Math.max(0,bonus-fromB);
+  const mb=document.getElementById('preMonthlyRetireBlock');
+  if(mb) mb.style.display=retireMonthlyAmt>0?'block':'none';
+  const bb=document.getElementById('preBonusRetireBlock');
+  if(bb) bb.style.display=retireBonusAmt>0?'block':'none';
+}
 function updateAll(){
   updateTotalAsset();
   updateCashCalc();
+  updateRetireTargetGrayout();
 }
 function updateTotalAsset(){
   const ra=+document.getElementById('riskAsset').value||0;
@@ -925,7 +972,8 @@ function getParams(){
   const bonusInvest=+document.getElementById('bonusInvest').value||0;
   const fromM=+document.getElementById('shortageFromMonthly').value||0;
   const fromB=+document.getElementById('shortageFromBonus').value||0;
-  const retireYearInvest=Math.max(0,(monthlyInvest*12+bonusInvest)-fromM-fromB);
+  const retireYearInvest=Math.max(0,monthlyInvest*12-fromM);
+  const retireBonusInvest=Math.max(0,bonusInvest-fromB);
   // 収入設定：かんたんモードは単純設定、詳細モードは期間設定
   let incPeriods;
   if(isDetail){
@@ -968,6 +1016,7 @@ function getParams(){
     shortageFromOther:+document.getElementById('shortageFromOther').value||0,
     monthlyInvest,bonusInvest,
     retireMonthlyInvest:retireYearInvest/12,
+    retireBonusInvest,
     preMonthlyInvestTarget:getInvestTarget('preMonthly'),
     preMonthlyRetireInvestTarget:getInvestTarget('preMonthlyRetire'),
     preBonusInvestTarget:getInvestTarget('preBonus'),
@@ -1000,16 +1049,30 @@ function getParams(){
     crashPct:+document.getElementById('crashPct').value/100,
     mcN:+document.getElementById('mcN').value||5000,
     annualStd:+document.getElementById('annualStd').value/100,
+    pensionSlideEnabled:document.getElementById('pensionSlideEnabled').checked,
+    pensionSlideRate:+document.getElementById('pensionSlideRate').value||0.8,
   };
 }
 
-function getIncome(p,ageI){
+function getIncome(p,ageI,m){
   // 期間が重なる場合は合算する
   const aid=(ageI<=p.sonSupportUntil)?p.sonSupport:0;
   let total=aid;
   for(const pp of p.incPeriods){
     if(ageI>=pp.from&&ageI<=pp.to){
-      total+=pp.work+pp.pension;
+      total+=pp.work;
+      if(pp.pension>0){
+        let pensionAmt=pp.pension;
+        if(m!==undefined&&ageI>=p.pensionAge){
+          const yearsAfterPension=ageI-p.pensionAge;
+          // スライドオフ：インフレ率で増加（物価に完全連動）
+          // スライドオン：インフレ率－調整率で増加（実質的に目減り）
+          const slideAdj=p.pensionSlideEnabled?(p.pensionSlideRate/100):0;
+          const pensionGrowthRate=Math.max(0,p.inflationRate-slideAdj);
+          pensionAmt=pp.pension*Math.pow(1+pensionGrowthRate,yearsAfterPension);
+        }
+        total+=pensionAmt;
+      }
     }
   }
   return total;
@@ -1024,7 +1087,7 @@ function mInf(p){return Math.pow(1+p.inflationRate,1/12)-1;}
 
 function simulate(p,crashAge,retFn,collectTimeline){
   const mi=mInf(p);
-  const total=(p.maxAge-p.currentAge)*12;
+  const total=(p.maxAge-p.currentAge)*12+1;
   let riskAsset=p.riskAsset,cash=p.cashInit+p.savings;
   let retireInitDone=false,totalW=0;
   const yearlyResults=[],timelineEvents=[];
@@ -1047,7 +1110,9 @@ function simulate(p,crashAge,retFn,collectTimeline){
       if(ageI===ev.age&&miy===(ev.month-1)){
         const pRA=riskAsset,pC=cash;
         let rem=ev.amt;
-        const avail=Math.max(0,cash-p.expenseThreshold);
+        // しきい値は実質値→名目値に変換して比較
+        const thresholdNominal=p.expenseThreshold*def;
+        const avail=Math.max(0,cash-thresholdNominal);
         const fc=Math.min(rem,avail);
         cash-=fc;rem-=fc;
         if(rem>0){const take=Math.min(rem,riskAsset);riskAsset=Math.max(0,riskAsset-take);}
@@ -1061,15 +1126,15 @@ function simulate(p,crashAge,retFn,collectTimeline){
       const mInvest=isRetireYear?p.retireMonthlyInvest:p.monthlyInvest;
       const mTarget=isRetireYear?p.preMonthlyRetireInvestTarget:p.preMonthlyInvestTarget;
       if(mInvest>0){const r1=applyInvest(riskAsset,cash,mInvest,mTarget,p.globalInvestThreshold);riskAsset=r1.riskAsset;cash=r1.cash;}
-      // ボーナス積立（退職年以外、6月・12月）
-      // 退職年は積立総額を月割りしているため、ボーナス月の追加加算はしない
-      if(!isRetireYear&&(miy===5||miy===11)){
-        const bAmount=p.bonusInvest/2;
-        const bTarget=p.preBonusInvestTarget;
+      // ボーナス積立（6月・12月）
+      // 通常年はbonusInvest、退職年はretireBonusInvest（fromB控除後）を使用
+      if(miy===5||miy===11){
+        const bAmount=isRetireYear?(p.retireBonusInvest/2):(p.bonusInvest/2);
+        const bTarget=isRetireYear?p.preBonusRetireInvestTarget:p.preBonusInvestTarget;
         if(bAmount>0){const r2=applyInvest(riskAsset,cash,bAmount,bTarget,p.globalInvestThreshold);riskAsset=r2.riskAsset;cash=r2.cash;}
       }
       if(isRetireYear&&miy===0&&collectTimeline){
-        timelineEvents.push({ageI,month:1,type:'retire',label:'退職年の積立変化',normalInvest:(p.monthlyInvest*12+p.bonusInvest),actualInvest:(p.retireMonthlyInvest*12),diff:-((p.monthlyInvest*12+p.bonusInvest)-(p.retireMonthlyInvest*12)),def});
+        timelineEvents.push({ageI,month:1,type:'retire',label:'退職年の積立変化',normalInvest:(p.monthlyInvest*12+p.bonusInvest),actualInvest:(p.retireMonthlyInvest*12+p.retireBonusInvest),diff:-((p.monthlyInvest*12+p.bonusInvest)-(p.retireMonthlyInvest*12+p.retireBonusInvest)),def});
       }
     }else if(ageX<p.withdrawStartAge){
       // フェーズ2：退職後・取り崩し前（積立のみ、取り崩しなし）
@@ -1128,7 +1193,7 @@ function simulate(p,crashAge,retFn,collectTimeline){
       if(p.postRetireInvest>0&&ageI<p.postRetireInvestUntil){const r3=applyInvest(riskAsset,cash,p.postRetireInvest,p.postMonthlyInvestTarget,p.globalInvestThreshold);riskAsset=r3.riskAsset;cash=r3.cash;}
       if(p.postRetireBonus>0&&ageI<p.postRetireInvestUntil&&(miy===5||miy===11)){const r4=applyInvest(riskAsset,cash,p.postRetireBonus/2,p.postBonusInvestTarget,p.globalInvestThreshold);riskAsset=r4.riskAsset;cash=r4.cash;}
       // 取り崩し
-      const income=getIncome(p,ageI);
+      const income=getIncome(p,ageI,m);
       const lc=p.monthlyExpense*Math.pow(1+mi,m);
       if(p.wMode==='rate'){
         let w=riskAsset*wRate(p,ageI);riskAsset-=w;if(riskAsset<0){w+=riskAsset;riskAsset=0;}totalW+=w;
@@ -1242,7 +1307,7 @@ function renderResults(p,det,mc,crashR){
     let w=0;
     if(p.wMode==='rate')w=raA*wRate(p,age);
     else if(p.wMode==='fixed')w=Math.min(p.fixedWithdraw,raA);
-    const inc=getIncome(p,age);
+    const inc=getIncome(p,age,(age-p.currentAge)*12);
     const total=w+inc,surplus=total-lc,isOk=surplus>=0;
     return '<div class="cf-card">'+
       '<div class="cf-age">'+age+'歳</div><div class="cf-phase">'+cfLabels[i]+'</div>'+
@@ -1395,7 +1460,33 @@ async function downloadPNG(){
 }
 function downloadPDF(){
   const styleEl=document.createElement('style');styleEl.id='print-override';
-  styleEl.textContent='@media print{body{background:#fff!important;color:#111!important;}.app{display:block!important;}.sidebar{display:none!important;}.main{padding:10px!important;}.dl-bar{display:none!important;}.kpi,.chart-box,.tbl-box,.cf-card,.crash-card{background:#f8f8f8!important;border:1px solid #ddd!important;}.kpi .kv,.kpi .kl,.kpi .ks,.chart-title,.tbl-title,.chart-desc,.tbl-desc{color:#111!important;}td,th{color:#111!important;border-color:#ccc!important;}@page{size:A4 landscape;margin:8mm;}}';
+  styleEl.textContent=`@media print {
+  body { background:#fff!important; color:#111!important; font-size:12px!important; }
+  .app { display:block!important; }
+  .sidebar { display:none!important; }
+  .main { padding:6px!important; }
+  .dl-bar { display:none!important; }
+  .kpi-grid { grid-template-columns:repeat(4,1fr)!important; gap:6px!important; margin-bottom:10px!important; }
+  .kpi { padding:10px!important; background:#f8f8f8!important; border:1px solid #ddd!important; }
+  .kpi .kv { font-size:16px!important; color:#1a1d23!important; }
+  .kpi .kl,.kpi .ks { color:#555!important; }
+  .cf-grid { grid-template-columns:repeat(3,1fr)!important; gap:6px!important; margin-bottom:10px!important; }
+  .cf-card { padding:10px!important; background:#f8f8f8!important; border:1px solid #ddd!important; }
+  .cf-age,.cf-lbl,.cf-val,.cf-res { color:#111!important; }
+  .chart-row { grid-template-columns:2fr 1fr!important; gap:8px!important; margin-bottom:10px!important; }
+  .chart-box,.tbl-box { background:#f8f8f8!important; border:1px solid #ddd!important; padding:10px!important; margin-bottom:10px!important; box-shadow:none!important; }
+  .chart-title,.tbl-title { color:#111!important; font-size:12px!important; }
+  .chart-desc,.tbl-desc { color:#555!important; font-size:10px!important; }
+  .chart-legend span { color:#333!important; font-size:10px!important; }
+  .crash-grid { grid-template-columns:repeat(4,1fr)!important; gap:6px!important; }
+  .crash-card { background:#f0f0f0!important; border:1px solid #ddd!important; padding:8px!important; }
+  .crash-res,.crash-age,.crash-sub { color:#111!important; }
+  table.snap th,table.snap td { color:#111!important; border-color:#ccc!important; font-size:10px!important; padding:4px 6px!important; }
+  .ev-badge { font-size:9px!important; }
+  canvas { max-width:100%!important; }
+  #reverseCalcBox { background:#f8f8f8!important; border:1px solid #ddd!important; }
+  @page { size:A4 portrait; margin:8mm; }
+}`;
   document.head.appendChild(styleEl);
   window.print();
   setTimeout(()=>{const el=document.getElementById('print-override');if(el)el.remove();},1000);
@@ -1453,35 +1544,52 @@ function runReverseCalc(){
   }
   const targetAge=+document.getElementById('revTargetAge').value||90;
   const targetAmtReal=+document.getElementById('revTargetAmountReal').value||0;
-  const p=lastParams;
+  const p=Object.assign({},lastParams,{withdrawStartAge:+document.getElementById('withdrawStartAge').value||lastParams.withdrawStartAge});
   const mi=mInf(p);
   const def=Math.pow(1+mi,(targetAge-p.currentAge)*12);
   const targetAmtNominal=targetAmtReal*def;
 
   // 二分探索で取り崩し率を求める
-  // シミュレーションを回して目標年齢のリスク資産残高が目標額に最も近い率を探す
+  // 条件：①目標年齢まで枯渇しない ②目標年齢のリスク資産残高が目標額に一致
   function simWithRate(rate){
-    const pMod=Object.assign({},p,{wr1:rate,wr2:rate*0.8,wr3:rate*0.6});
+    const pMod=Object.assign({},p,{wr1:rate,wr2:rate*0.8,wr3:rate*0.6,maxAge:targetAge});
     const res=simulate(pMod,null,()=>mRet(pMod),false);
+    // 枯渇した場合はnullを返す
+    if(res.bankruptAge!==null&&res.bankruptAge<=targetAge) return null;
     const snap=res.yearlyResults.find(r=>r.age===targetAge);
-    if(!snap) return{raR:0,cashR:0,bankruptAge:res.bankruptAge};
-    return{raR:snap.raR,cashR:snap.cashR,bankruptAge:res.bankruptAge};
+    if(!snap) return null;
+    return{raR:snap.raR,cashR:snap.cashR,raNom:snap.raNom};
   }
 
-  // 目標: targetAge時点のraNom（名目）= targetAmtNominal
-  // raR（実質）= targetAmtReal
-  // 二分探索: rate を 0.001% ~ 2% の範囲で探索
-  let lo=0.0001,hi=0.02,bestRate=null,bestDiff=Infinity;
-  for(let iter=0;iter<60;iter++){
+  // 二分探索：取り崩し率を上げると残高が減る
+  // lo（低い率）→ 残高が多すぎる
+  // hi（高い率）→ 枯渇または残高が少なすぎる
+  // 目標：targetAge時点の実質残高 = targetAmtReal
+  let lo=0.00001,hi=0.03,bestRate=null,bestDiff=Infinity;
+
+  // まずhiで枯渇するか確認
+  const hiCheck=simWithRate(hi);
+  if(hiCheck!==null&&hiCheck.raR>targetAmtReal){
+    // 最大率でも残高が多すぎる → 現在の設定では目標より多く残る
+    // loをもっと下げて対応
+    hi=0.1;
+  }
+
+  for(let iter=0;iter<80;iter++){
     const mid=(lo+hi)/2;
     const r=simWithRate(mid);
+    if(r===null){
+      // 枯渇 → 率が高すぎるのでhiを下げる
+      hi=mid;
+      continue;
+    }
     const diff=r.raR-targetAmtReal;
     if(Math.abs(diff)<Math.abs(bestDiff)){bestDiff=diff;bestRate=mid;}
     if(diff>0) lo=mid; else hi=mid;
-    if(Math.abs(diff)<10000) break;
+    if(Math.abs(diff)<1000) break;
   }
 
-  if(bestRate===null||bestRate<0.0001){
+  if(bestRate===null){
     document.getElementById('reverseCalcError').style.display='block';
     document.getElementById('reverseCalcResult').style.display='none';
     document.getElementById('reverseCalcError').textContent='目標条件を達成できる取り崩し率が見つかりませんでした。目標年齢・目標残高を調整してみてください。';
@@ -1531,13 +1639,19 @@ function runReverseCalc(){
   });
 
   // 年齢ごとの一覧表
-  const snapAges=[p.currentAge,...[60,65,70,75,80,85,90,95,100].filter(a=>a>p.currentAge&&a<=p.maxAge)];
+  const wsa=p.withdrawStartAge;
+  const snapAgesBase=[p.currentAge,...[60,65,70,75,80,85,90,95,100].filter(a=>a>p.currentAge&&a<=targetAge)];
+  if(wsa&&wsa>p.currentAge&&wsa<=targetAge&&!snapAgesBase.includes(wsa))snapAgesBase.push(wsa);
+  snapAgesBase.sort((a,b)=>a-b);
+  const snapAges=snapAgesBase;
   const tableRows=snapAges.map(age=>{
     const r=res.yearlyResults.find(x=>x.age===age);
     if(!r)return'';
     const isTarget=age===targetAge;
-    return '<tr style="'+(isTarget?'background:rgba(217,119,6,0.08);font-weight:700;':'')+'">'+
-      '<td style="text-align:left;font-family:var(--sans);font-size:12px;color:'+(isTarget?'var(--orange)':'var(--text2)')+'">'+age+'歳'+(isTarget?' ★':'')+'</td>'+
+    const isWsa=age===wsa;
+    const label=isTarget?' ★':isWsa?' 🔻取崩開始':'';
+    return '<tr style="'+(isTarget?'background:rgba(217,119,6,0.08);font-weight:700;':isWsa?'background:rgba(37,99,235,0.06);':'')+'">'+
+      '<td style="text-align:left;font-family:var(--sans);font-size:12px;color:'+(isTarget?'var(--orange)':isWsa?'var(--accent)':'var(--text2)')+'">'+age+'歳'+label+'</td>'+
       '<td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--accent)">'+Math.round(r.raR/10000).toLocaleString()+'万円</td>'+
       '<td style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--orange)">'+Math.round(r.raNom/10000).toLocaleString()+'万円</td>'+
     '</tr>';
@@ -1552,6 +1666,143 @@ function runReverseCalc(){
       '</tr></thead>'+
       '<tbody>'+tableRows+'</tbody>'+
     '</table>';
+}
+
+// データ保存
+function saveData(){
+  const numIds=[
+    'currentAge','retirementAge','cashInitAge','withdrawStartAge','pensionAge','maxAge',
+    'riskAsset','cashInit','savings','severance',
+    'targetCashAtRetire','globalInvestThreshold',
+    'shortageFromRA','shortageFromMonthly','shortageFromBonus','shortageFromOther',
+    'monthlyInvest','bonusInvest','postRetireInvest','postRetireBonus','postRetireInvestUntil',
+    'inc1_work','inc2_pension',
+    'inc1_from','inc1_to','inc1_work_detail','inc1_pension',
+    'inc2_from','inc2_to','inc2_work','inc2_pension_detail',
+    'inc3_from','inc3_to','inc3_work','inc3_pension',
+    'sonSupport','sonSupportUntil',
+    'monthlyExpense','annualReturn','inflationRate',
+    'wr1','wr2','wr3','wr1AgeTo','wr2AgeTo',
+    'fixedWithdraw','bufferMax','bufferMin',
+    'crashPct','mcN','annualStd','expenseThreshold',
+    'pensionSlideRate',
+    'preMonthlyTargetSplitAmt','preMonthlyRetireTargetSplitAmt',
+    'preBonusTargetSplitAmt','preBonusRetireTargetSplitAmt',
+    'postMonthlyTargetSplitAmt','postBonusTargetSplitAmt',
+  ];
+  const radioNames=[
+    'wMode','severanceTarget','incomeTarget',
+    'preMonthlyTarget','preMonthlyRetireTarget',
+    'preBonusTarget','preBonusRetireTarget',
+    'postMonthlyTarget','postBonusTarget',
+  ];
+  const data={version:1,inputs:{},radios:{},checkboxes:{},incomeEvents:[],expenseEvents:[]};
+  numIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) data.inputs[id]=el.value;
+  });
+  radioNames.forEach(name=>{
+    const el=document.querySelector('input[name="'+name+'"]:checked');
+    if(el) data.radios[name]=el.value;
+  });
+  // チェックボックス
+  const slideEl=document.getElementById('pensionSlideEnabled');
+  if(slideEl) data.checkboxes.pensionSlideEnabled=slideEl.checked;
+  const modeEl=document.getElementById('appRoot');
+  if(modeEl) data.mode=modeEl.getAttribute('data-mode');
+  // 臨時収入
+  document.getElementById('extraIncomeBody').querySelectorAll('tr').forEach(tr=>{
+    const id=tr.id.replace('inc_','');
+    data.incomeEvents.push({
+      age:document.getElementById('inAge_'+id)?.value,
+      month:document.getElementById('inMon_'+id)?.value,
+      type:document.getElementById('inType_'+id)?.value,
+      amt:document.getElementById('inAmt_'+id)?.value,
+    });
+  });
+  // 臨時支出
+  document.getElementById('extraExpenseBody').querySelectorAll('tr').forEach(tr=>{
+    const id=tr.id.replace('exp_','');
+    data.expenseEvents.push({
+      age:document.getElementById('exAge_'+id)?.value,
+      month:document.getElementById('exMon_'+id)?.value,
+      type:document.getElementById('exType_'+id)?.value,
+      amt:document.getElementById('exAmt_'+id)?.value,
+    });
+  });
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const a=document.createElement('a');
+  const now=new Date();
+  a.download='老後資産シミュレーション設定_'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'.json';
+  a.href=URL.createObjectURL(blob);
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// データ読込
+function loadData(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.version) throw new Error('形式が違います');
+      // 数値入力欄
+      Object.entries(data.inputs||{}).forEach(([id,val])=>{
+        const el=document.getElementById(id);
+        if(el) el.value=val;
+      });
+      // ラジオボタン
+      Object.entries(data.radios||{}).forEach(([name,val])=>{
+        const el=document.querySelector('input[name="'+name+'"][value="'+val+'"]');
+        if(el){el.checked=true;}
+      });
+      // チェックボックス
+      if(data.checkboxes){
+        const slideEl=document.getElementById('pensionSlideEnabled');
+        if(slideEl&&data.checkboxes.pensionSlideEnabled!==undefined){
+          slideEl.checked=data.checkboxes.pensionSlideEnabled;
+          updatePensionSlideUI();
+        }
+      }
+      // モード
+      if(data.mode) setMode(data.mode);
+      // 臨時収入を再構築
+      document.getElementById('extraIncomeBody').innerHTML='';
+      (data.incomeEvents||[]).forEach(ev=>{
+        addIncomeRow();
+        const id=incomeRowId-1;
+        document.getElementById('inAge_'+id).value=ev.age||65;
+        document.getElementById('inMon_'+id).value=ev.month||1;
+        document.getElementById('inAmt_'+id).value=ev.amt||0;
+        const typeEl=document.getElementById('inType_'+id);
+        if(typeEl)[...typeEl.options].forEach(o=>{if(o.value===ev.type)o.selected=true;});
+      });
+      // 臨時支出を再構築
+      document.getElementById('extraExpenseBody').innerHTML='';
+      (data.expenseEvents||[]).forEach(ev=>{
+        addExpenseRow();
+        const id=expenseRowId-1;
+        document.getElementById('exAge_'+id).value=ev.age||70;
+        document.getElementById('exMon_'+id).value=ev.month||1;
+        document.getElementById('exAmt_'+id).value=ev.amt||0;
+        const typeEl=document.getElementById('exType_'+id);
+        if(typeEl)[...typeEl.options].forEach(o=>{if(o.value===ev.type)o.selected=true;});
+      });
+      // UI更新
+      ['preMonthly','preMonthlyRetire','preBonus','preBonusRetire','postMonthly','postBonus'].forEach(p=>updateInvestUI(p));
+      updateWithdrawUI();updateSeveranceUI();checkThresholdVisibility();
+      updateWrLabels();updatePensionMonthly();updateAll();
+      // ファイル入力をリセット
+      event.target.value='';
+      alert('データを読み込みました。「計算する」を押して結果を更新してください。');
+    }catch(err){
+      alert('読み込みに失敗しました。正しい設定ファイルか確認してください。\n'+err.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
 window.addEventListener('load',()=>{updateWrLabels();updatePensionMonthly();updateAll();checkThresholdVisibility();runSimulation();});
