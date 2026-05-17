@@ -240,19 +240,19 @@ table.snap tr:last-child td{border-bottom:none;}
     <div class="section-label">💰 今持っているお金</div>
     <div class="field">
       <div class="field-header"><label>株・投資信託などの資産（リスク資産）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">株式・投資信託・ETF・iDeCoなど、価格が日々変動する資産の合計額。値動きがある分、長期では増える可能性がある資産です。</span></span></div>
-      <input type="number" id="riskAsset" value="35693592" oninput="updateAll()"><div class="unit">円</div>
+      <input type="number" id="riskAsset" value="3000000" oninput="updateAll()"><div class="unit">円</div>
     </div>
     <div class="field">
       <div class="field-header"><label>銀行の預貯金（すぐ使えるお金）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">普通預金・定期預金など、すぐに引き出せる現金。生活費が足りないときに使う「いざというときの備え」として管理します。</span></span></div>
-      <input type="number" id="cashInit" value="1139359" oninput="updateAll()"><div class="unit">円</div>
+      <input type="number" id="cashInit" value="1000000" oninput="updateAll()"><div class="unit">円</div>
     </div>
     <div class="field detail-only">
       <div class="field-header"><label>特定の目的のために積み立てているお金</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">旅行・車・住宅修繕など特定の出費のために別途積み立てているお金。退職時に「いざというときの備え」に合算されます。なければ 0。</span></span></div>
-      <input type="number" id="savings" value="649782" oninput="updateAll()"><div class="unit">円（なければ 0）</div>
+      <input type="number" id="savings" value="0" oninput="updateAll()"><div class="unit">円（なければ 0）</div>
     </div>
     <div class="field">
       <div class="field-header"><label>退職金（もらえる予定の金額）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">フルタイムを辞めるときに受け取る退職金の見込み額（税引後）。退職した年に「いざというときの備え」に加算されます。なければ 0。</span></span></div>
-      <input type="number" id="severance" value="1200000" oninput="updateAll()">
+      <input type="number" id="severance" value="0" oninput="updateAll()">
       <div class="unit">円（なければ 0）</div>
       <div class="detail-only" style="margin-top:8px;">
         <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">退職金をどこへ振り向けるか</div>
@@ -276,7 +276,7 @@ table.snap tr:last-child td{border-bottom:none;}
     <div class="section-label" id="retirementCashLabel">🏦 退職時（62歳）の備え用のお金の設定</div>
     <div class="field">
       <div class="field-header"><label>退職時の備え用のお金の目標額</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">退職時点で「いざというときの備え」をいくらにしたいかを入力します。不足分が出た場合は下の欄で補填方法を設定してください。0 にすると目標設定なし。</span></span></div>
-      <input type="number" id="targetCashAtRetire" value="4000000" oninput="updateAll()">
+      <input type="number" id="targetCashAtRetire" value="0" oninput="updateAll()">
       <div class="unit">円（0 にすると目標設定なし）</div>
     </div>
     <div class="info-box" id="cashBufferCalc">計算後に表示</div>
@@ -295,7 +295,7 @@ table.snap tr:last-child td{border-bottom:none;}
       <div class="shortage-row">
         <label>ボーナス積立から回す（退職前）</label>
         <span class="tip"><span class="tip-btn">?</span><span class="tip-box">退職前のボーナスから備え用のお金に回す合計金額。退職年の年間積立が「通常積立額－この金額」に減額され、月々均等割りされます。</span></span>
-        <input type="number" id="shortageFromBonus" value="1010000" oninput="updateAll()"><span class="sunit">円</span>
+        <input type="number" id="shortageFromBonus" value="0" oninput="updateAll()"><span class="sunit">円</span>
       </div>
       <div class="shortage-row">
         <label>定期預金の解約・他口座から</label>
@@ -319,7 +319,7 @@ table.snap tr:last-child td{border-bottom:none;}
     </div>
     <div class="field">
       <div class="field-header"><label>毎月の積立額</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">給与から毎月積み立てる金額。なければ 0。</span></span></div>
-      <input type="number" id="monthlyInvest" value="80000"><div class="unit">円/月（なければ 0）</div>
+      <input type="number" id="monthlyInvest" value="30000"><div class="unit">円/月（なければ 0）</div>
       <div class="detail-only" style="margin-top:6px;" id="preMonthlyTargetArea">
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">積立先（通常年）</div>
         <div class="radio-group">
@@ -347,7 +347,7 @@ table.snap tr:last-child td{border-bottom:none;}
     </div>
     <div class="field">
       <div class="field-header"><label>年間ボーナス積立額（合計）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">ボーナスから年間で積み立てる合計額。計算上は6月・12月に半分ずつ積み立てます。なければ 0。</span></span></div>
-      <input type="number" id="bonusInvest" value="740000"><div class="unit">円/年（なければ 0）</div>
+      <input type="number" id="bonusInvest" value="100000"><div class="unit">円/年（なければ 0）</div>
       <div class="detail-only" style="margin-top:6px;">
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">積立先（通常年）</div>
         <div class="radio-group">
@@ -424,7 +424,7 @@ table.snap tr:last-child td{border-bottom:none;}
     <div class="section-label">💼 退職後の収入</div>
     <div class="field simple-income-field">
       <div class="field-header"><label>パート・非常勤などの月収（手取り）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">退職後に得る給与収入の月額（手取り）。年金をもらいながら働く場合も含みます。収入の金額が途中で変わる場合は詳細モードの期間テーブルで設定できます。なければ 0。</span></span></div>
-      <input type="number" id="inc1_work" value="100000"><div class="unit">円/月（なければ 0）</div>
+      <input type="number" id="inc1_work" value="50000"><div class="unit">円/月（なければ 0）</div>
     </div>
     <div class="field simple-income-field">
       <div class="field-header"><label>年金の年間受取額（手取り）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">税金・健康保険料・介護保険料を引いた「実際に手元に来る」年間合計額。「ねんきん定期便」や「ねんきんネット」で確認できます。詳細モードでは下の期間テーブルで設定できます。</span></span></div>
@@ -433,7 +433,7 @@ table.snap tr:last-child td{border-bottom:none;}
     </div>
     <div class="field detail-only">
       <div class="field-header"><label>家族・パートナーなどからの援助</label></div>
-      <input type="number" id="sonSupport" value="60000"><div class="unit">円/月（なければ 0）</div>
+      <input type="number" id="sonSupport" value="0"><div class="unit">円/月（なければ 0）</div>
     </div>
     <div class="field detail-only">
       <div class="field-header"><label>援助が終わる年齢</label></div>
@@ -450,7 +450,7 @@ table.snap tr:last-child td{border-bottom:none;}
             <td style="font-size:11px;color:var(--text3);white-space:nowrap;padding:6px 4px;">期間①</td>
             <td><input type="number" id="inc1_from" value="62"></td>
             <td><input type="number" id="inc1_to" value="64"></td>
-            <td><input type="number" id="inc1_work_detail" value="100000"></td>
+            <td><input type="number" id="inc1_work_detail" value="50000"></td>
             <td><input type="number" id="inc1_pension" value="0"></td>
           </tr>
           <tr>
@@ -509,7 +509,7 @@ table.snap tr:last-child td{border-bottom:none;}
     <div class="section-label">📊 生活費と運用</div>
     <div class="field">
       <div class="field-header"><label>今の月々の生活費</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">今かかっている毎月の生活費の合計（食費・光熱費・交通費・通信費・医療費・娯楽費など）。設定した物価の上昇率にしたがって毎年少しずつ増えます。</span></span></div>
-      <input type="number" id="monthlyExpense" value="200000"><div class="unit">円/月（物価の上昇にともない毎年増加）</div>
+      <input type="number" id="monthlyExpense" value="250000"><div class="unit">円/月（物価の上昇にともない毎年増加）</div>
     </div>
     <div class="grid2">
       <div class="field">
