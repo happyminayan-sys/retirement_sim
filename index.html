@@ -206,7 +206,7 @@ table.snap tr:last-child td{border-bottom:none;}
     <div class="grid2">
       <div class="field">
         <div class="field-header"><label>今の年齢</label></div>
-        <input type="number" id="currentAge" value="58"><div class="unit">歳</div>
+        <input type="number" id="currentAge" value="58" oninput="updateRevNominal()"><div class="unit">歳</div>
       </div>
       <div class="field">
         <div class="field-header"><label>フルタイムを辞める年齢</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">正社員・フルタイムを辞める予定の年齢。この年齢で退職前の積立が終了し、退職後の積立設定に切り替わります。</span></span></div>
@@ -518,7 +518,7 @@ table.snap tr:last-child td{border-bottom:none;}
       </div>
       <div class="field">
         <div class="field-header"><label>物価の上昇率（年間）</label><span class="tip"><span class="tip-btn">?</span><span class="tip-box">毎年物価が何%上がるかの見込み値。この分だけ毎年生活費が増えると計算します。一般的な想定値は2〜3%です。</span></span></div>
-        <input type="number" id="inflationRate" value="3"><div class="unit">%/年</div>
+        <input type="number" id="inflationRate" value="3" oninput="updateRevNominal()"><div class="unit">%/年</div>
       </div>
     </div>
   </div>
@@ -1432,15 +1432,16 @@ document.addEventListener('mouseout',function(e){
 let chartReverse=null;
 
 function updateRevNominal(){
-  if(!lastParams) return;
   const targetAge=+document.getElementById('revTargetAge').value||90;
   const realAmt=+document.getElementById('revTargetAmountReal').value||0;
-  const p=lastParams;
-  const mi=mInf(p);
-  const def=Math.pow(1+mi,(targetAge-p.currentAge)*12);
+  // 常に入力欄から直接取得
+  const inflationRate=+document.getElementById('inflationRate').value/100||0.03;
+  const currentAge=+document.getElementById('currentAge').value||58;
+  const mi=Math.pow(1+inflationRate,1/12)-1;
+  const def=Math.pow(1+mi,(targetAge-currentAge)*12);
   const nominal=realAmt*def;
-  document.getElementById('revNominalVal').textContent=
-    Math.round(nominal/10000).toLocaleString()+'万円';
+  const el=document.getElementById('revNominalVal');
+  if(el) el.textContent=Math.round(nominal/10000).toLocaleString()+'万円';
 }
 let lastParams=null; // 最後にrunSimulationで使ったパラメータを保存
 
